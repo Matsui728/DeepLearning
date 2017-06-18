@@ -5,7 +5,7 @@ Created on Sun Jun 18 15:58:52 2017
 @author: kawalab
 """
 
-from copy import deepcopy   # 複製
+from copy import deepcopy   # 深い複製
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -148,15 +148,18 @@ if __name__ == '__main__':
         epoch_acc = np.mean(cuda.to_cpu(xp.array(epoch_accs)))     # エポックの平均認識率
         train_loss_log.appenmd(epoch_loss)
         train_acc_log.appenmd(epoch_acc)
+
         # 最小損失ならそのモデルを保持
         if loss.data < best_val_loss:
             best_model = deepcopy(model)
             best_val_loss = loss.data
             best_epoch = epoch
-            # エポック数、認識率、損失値の表示
+
+        # エポック数、認識率、損失値の表示
         print('{}: acc={}, loss={}'.format(
                 epoch, epoch_acc, epoch_loss))
 
+        # グラフの表示
         plt.figure(figsize=(10, 4))
         plt.title('Loss')
         plt.subplot(1, 2, 1)
