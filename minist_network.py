@@ -84,7 +84,7 @@ if __name__ == '__main__':
     num_test = len(x_test)
 
     # モデル、オプティマイザ（chainer関数の使用）
-    model = ConvNet()
+    model = CNN()
     optimizer = optimizers.Adam(learing_rate)
     optimizer.setup(model)
 
@@ -102,9 +102,9 @@ if __name__ == '__main__':
     best_val_loss = np.inf  # 損失関数最小値保持値
     # 訓練定義
     for epoch in range(num_epochs):
+        epoch_losses = []               # エポック内の損失値
+        epoch_accs = []                 # エポック内の認識率
         for i in tqdm(range(0, num_train, batch_size)):
-            epoch_losses = []               # エポック内の損失値
-            epoch_accs = []                 # エポック内の認識率
             x_batch = xp.asarray(x_train[i:i+batch_size])  # 1->バッチサイズまでのループ
             ｃ_batch = xp.asarray(c_train[i:i+batch_size])
             y_batch = model(x_batch)
@@ -119,35 +119,34 @@ if __name__ == '__main__':
             epoch_losses.append(loss.data)
             epoch_accs.append(accuracy.data)
 
-        epoch_loss = np.mean(cuda.to_cpu(xp.array(epoch_losses)))   # エポックの平均損失
-        epoch_acc = np.mean(cuda.to_cpu(xp.array(epoch_accs)))     # エポックの平均認識率
-        train_loss_log.appenmd(epoch_loss)
-        train_acc_log.appenmd(epoch_acc)
+        epoch_loss = np.mean(cuda.to_cpu(xp.stack(epoch_losses)))   # エポックの平均損失
+        epoch_acc = np.mean(cuda.to_cpu(xp.stack(epoch_accs)))     # エポックの平均認識率
+        train_loss_log.append(epoch_loss)
+        train_acc_log.append(epoch_acc)
 
-    # バリデーション
-    losses = []
-    accs = []
-    for epoch in range(num_epochs):
+        # バリデーション
+        losses = []
+        accs = []
         for i in tqdm(range(0, num_train, batch_size)):
             epoch_losses = []               # エポック内の損失値
             epoch_accs = []                 # エポック内の認識率
             x_batch = xp.asarray(x_train[i:i+batch_size])  # 1->バッチサイズまでのループ
             ｃ_batch = xp.asarray(c_train[i:i+batch_size])
+
+            x_batch = chainer.Variable(x_batch, volatile=True)
+            ｃ_batch = chainer.Variable(c_batch, volatile=True)
             y_batch = model(x_batch)
 
             # 損失関数の計算
             loss = F.softmax_cross_entropy(y_batch, c_batch)
-            model.cleargrads()              # 勾配のリセット
-            loss.backward()                 # 重みの更新
             accuracy = F.accuracy(y_batch, c_batch)       # 認識率
-            optimizer.update()
 
-            epoch_losses.append(loss.data)
-            epoch_accs.append(accuracy.data)
-        epoch_loss = np.mean(cuda.to_cpu(xp.array(epoch_losses)))   # エポックの平均損失
-        epoch_acc = np.mean(cuda.to_cpu(xp.array(epoch_accs)))     # エポックの平均認識率
-        train_loss_log.appenmd(epoch_loss)
-        train_acc_log.appenmd(epoch_acc)
+            losses.append(loss.data)
+            accs.append(accuracy.data)
+        test_loss = np.mean(cuda.to_cpu(xp.stack(losses)))   # エポックの平均損失
+        test_acc = np.mean(cuda.to_cpu(xp.stack(accs)))     # エポックの平均認識率
+        test_loss_log.append(test_loss)
+        test_acc_log.append(test_acc)
 
         # 最小損失ならそのモデルを保持
         if loss.data < best_val_loss:
@@ -159,7 +158,7 @@ if __name__ == '__main__':
         print('{}: acc={}, loss={}'.format(
                 epoch, epoch_acc, epoch_loss))
 
-        # グラフの表示
+    # グラフの表示
         plt.figure(figsize=(10, 4))
         plt.title('Loss')
         plt.subplot(1, 2, 1)
