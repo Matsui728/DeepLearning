@@ -30,9 +30,9 @@ def load_mnist():
 class ConvNet(chainer.Chain):
     def __init__(self):
         super(ConvNet, self).__init__(
-            conv1=L.Convolution2D(1, 10, 3),     # 28 ->26
-            conv2=L.Convolution2D(10, 10, 4),    # 13 ->10
-            fc1=L.Linear(250, 10)
+            conv1=L.Convolution2D(1, 100, 3),     # 28 ->26
+            conv2=L.Convolution2D(100, 100, 4),    # 13 ->10
+            fc1=L.Linear(2500, 10)
         )
 
     def __call__(self, x):
@@ -84,7 +84,7 @@ if __name__ == '__main__':
     num_test = len(x_test)
 
     # モデル、オプティマイザ（chainer関数の使用）
-    model = CNN()
+    model = ConvNet()
     optimizer = optimizers.Adam(learing_rate)
     optimizer.setup(model)
 
