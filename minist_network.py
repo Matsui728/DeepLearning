@@ -44,6 +44,7 @@ class ConvNet(chainer.Chain):
         return y
 
 
+
 class CNN(chainer.Chain):
     def __init__(self, channel=1, c1=16, c2=32, c3=64, f1=256,
                  f2=512, filter_size1=3, filter_size2=3, filter_size3=3):
