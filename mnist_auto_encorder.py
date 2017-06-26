@@ -98,9 +98,9 @@ if __name__ == '__main__':
         # バリデーション
         losses = []
         accs = []
-        for i in tqdm(range(0, num_train, batch_size)):
-            epoch_losses = []               # エポック内の損失値
-            x_batch = xp.asarray(x_train[i:i+batch_size])  # 1->バッチサイズまでのループ
+        for i in tqdm(range(0, num_test, batch_size)):
+            epoch_losses = []              # エポック内の損失値
+            x_batch = xp.asarray(x_test[i:i+batch_size])  # 1->バッチサイズまでのループ
             x_batch = chainer.Variable(x_batch, volatile=True)
             y_batch = model(x_batch)
 
@@ -126,8 +126,11 @@ if __name__ == '__main__':
         plt.plot(test_loss_log, label='test loss')
         plt.legend()
         plt.grid()
-
-    out_put = y_batch[0:10]
-    for i in range(0, 10):
-        plt.matshow(y_batch, map=plt.cm.gray)
         plt.show()
+
+
+"""
+    for i in range(0, 10):
+        plt.matshow(y_batch[i], map=plt.cm.gray)
+        plt.show()
+"""
