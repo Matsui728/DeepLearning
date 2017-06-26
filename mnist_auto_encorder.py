@@ -20,8 +20,8 @@ from chainer.datasets import get_mnist
 from chainer.dataset import concat_examples
 
 
-def load_mnist():
-    train, test = get_mnist(ndim=3)
+def load_mnist(ndim):
+    train, test = get_mnist(ndim=ndim)
     train = concat_examples(train)
     test = concat_examples(test)
     return train, test
@@ -35,22 +35,25 @@ class AutoEncoder1d(chainer.Chain):
             )
 
     def __call__(self, x):
+        assert x.ndim == 2        # x.ndimは2である
+        assert x.shape[1] == 784  # x.shapeは(??, 784)である
+
         h = F.relu(self.l1(x))
         y = self.l2(h)
+        assert y.shape == x.shape  # 入力と出力のshapeが同じである
         return y
-
 
 if __name__ == '__main__':
     # ハイパーパラメータ
     gpu = 0                # GPU>=0, CPU < 0
-    num_epochs = 10        # エポック数
+    num_epochs = 100        # エポック数
     batch_size = 500        # バッチ数
     learing_rate = 0.001   # 学習率
 
     xp = cuda.cupy if gpu >= 0 else np
 
     # データ読み込み
-    train, test = load_mnist()
+    train, test = load_mnist(1)
     x_train, c_train = train
     x_test, c_test = test
     num_train = len(x_train)
@@ -114,15 +117,16 @@ if __name__ == '__main__':
         # エポック数、認識率、損失値の表示
         print('{}: loss = {}'.format(epoch, epoch_loss))
 
-    # グラフの表示
+        # グラフの表示
         plt.figure(figsize=(10, 4))
         plt.title('Loss')
-        plt.subplot(1, 2, 1)
         plt.plot(train_loss_log, label='train loss')
         plt.plot(test_loss_log, label='test loss')
         plt.legend()
         plt.grid()
-
+"""
     out_put = y_batch[0:10]
-    plt.imshow(out_put.reshape(28, 28), cmap='gray')
-    plt.show()
+    for i in range(0, 10):
+        plt.imshow(out_put[i].reshape(28, 28), cmap='gray')
+        plt.show()
+"""
