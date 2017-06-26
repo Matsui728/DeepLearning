@@ -31,7 +31,8 @@ class AutoEncoder1d(chainer.Chain):
     def __init__(self):
         super(AutoEncoder1d, self).__init__(
             l1=L.Linear(784, 300),
-            l2=L.Linear(300, 784)
+            l2=L.Linear(300, 300),
+            l3=L.Linear(300, 784)
             )
 
     def __call__(self, x):
@@ -39,14 +40,15 @@ class AutoEncoder1d(chainer.Chain):
         assert x.shape[1] == 784  # x.shapeは(??, 784)である
 
         h = F.relu(self.l1(x))
-        y = self.l2(h)
+        h = F.relu(self.l2(h))
+        y = self.l3(h)
         assert y.shape == x.shape  # 入力と出力のshapeが同じである
         return y
 
 if __name__ == '__main__':
     # ハイパーパラメータ
     gpu = 0                # GPU>=0, CPU < 0
-    num_epochs = 100        # エポック数
+    num_epochs = 10    # エポック数
     batch_size = 500        # バッチ数
     learing_rate = 0.001   # 学習率
 
@@ -124,9 +126,8 @@ if __name__ == '__main__':
         plt.plot(test_loss_log, label='test loss')
         plt.legend()
         plt.grid()
-"""
+
     out_put = y_batch[0:10]
     for i in range(0, 10):
-        plt.imshow(out_put[i].reshape(28, 28), cmap='gray')
+        plt.matshow(y_batch, map=plt.cm.gray)
         plt.show()
-"""
