@@ -36,7 +36,6 @@ class AutoEncoder1d(chainer.Chain):
 
     def __call__(self, x):
         h = F.relu(self.l1(x))
-        h = F.max_pooling_nd(h, 2)
         y = self.l2(h)
         return y
 
@@ -82,7 +81,7 @@ if __name__ == '__main__':
             y_batch = model(x_batch)
 
             # 損失関数の計算
-            loss = F.sigmoid_cross_entropy(y_batch, x_batch)
+            loss = F.mean_squared_error(y_batch, x_batch)
             model.cleargrads()              # 勾配のリセット
             loss.backward()                 # 重みの更新
             optimizer.update()
@@ -101,7 +100,7 @@ if __name__ == '__main__':
             y_batch = model(x_batch)
 
             # 損失関数の計算
-            loss = F.sigmoid_cross_entropy(y_batch, x_batch)
+            loss = F.mean_squared_error(y_batch, x_batch)
             losses.append(loss.data)
         test_loss = np.mean(cuda.to_cpu(xp.stack(losses)))   # エポックの平均損失
         test_loss_log.append(test_loss)
