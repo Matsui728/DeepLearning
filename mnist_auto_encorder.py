@@ -30,20 +30,27 @@ def load_mnist(ndim):
 class AutoEncoder1d(chainer.Chain):
     def __init__(self):
         super(AutoEncoder1d, self).__init__(
-            l1=L.Linear(784, 300),
-            l2=L.Linear(300, 300),
-            l3=L.Linear(300, 784)
+            l1=L.Linear(784, 500),
+            l2=L.Linear(500, 400),
+            l3=L.Linear(400, 300),
+            l4=L.Linear(300, 400),
+            l5=L.Linear(400, 500),
+            l6=L.Linear(500, 784)
             )
 
     def __call__(self, x):
-        assert x.ndim == 2        # x.ndimは2である
-        assert x.shape[1] == 784  # x.shapeは(??, 784)である
 
+        #assert x.ndim == 2        # x.ndimは2である
+        #assert x.shape[1] == 784  # x.shapeは(??, 784)である
         h = F.relu(self.l1(x))
         h = F.relu(self.l2(h))
-        y = self.l3(h)
-        assert y.shape == x.shape  # 入力と出力のshapeが同じである
+        h = F.relu(self.l3(h))
+        h = F.relu(self.l4(h))
+        h = F.relu(self.l5(h))
+        y = self.l6(h)
+        # assert y.shape == x.shape  # 入力と出力のshapeが同じである
         return y
+
 
 if __name__ == '__main__':
     # ハイパーパラメータ
@@ -128,9 +135,16 @@ if __name__ == '__main__':
         plt.grid()
         plt.show()
 
+    n = 4  # how many digits we will display
+    plt.figure(figsize=(20, 4))
+    for i in range(n):
+         x_batch = xp.asarray(x_test[i:i+batch_size])
+         x_batch = chainer.Variable(x_batch, volatile=True)
+         y_batch = best_model(x_batch)
+         a = x_test[i]
+         b = np.asarray(cuda.to_cpu(xp.stack(y_batch[i])))
+         # display original
+         plt.matshow(a.reshape(28, 28), cmap=plt.cm.gray)
+         # display reconstruction
+         plt.matshow(b.reshape(28, 28), cmap=plt.cm.gray)
 
-"""
-    for i in range(0, 10):
-        plt.matshow(y_batch[i], map=plt.cm.gray)
-        plt.show()
-"""
