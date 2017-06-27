@@ -39,23 +39,22 @@ class AutoEncoder1d(chainer.Chain):
             )
 
     def __call__(self, x):
-
-        #assert x.ndim == 2        # x.ndimは2である
-        #assert x.shape[1] == 784  # x.shapeは(??, 784)である
+        assert x.ndim == 2        # x.ndimは2である
+        assert x.shape[1] == 784  # x.shapeは(??, 784)である
         h = F.relu(self.l1(x))
         h = F.relu(self.l2(h))
         h = F.relu(self.l3(h))
         h = F.relu(self.l4(h))
         h = F.relu(self.l5(h))
         y = self.l6(h)
-        # assert y.shape == x.shape  # 入力と出力のshapeが同じである
+        assert y.shape == x.shape  # 入力と出力のshapeが同じである
         return y
 
 
 if __name__ == '__main__':
     # ハイパーパラメータ
     gpu = 0                # GPU>=0, CPU < 0
-    num_epochs = 10    # エポック数
+    num_epochs = 500    # エポック数
     batch_size = 500        # バッチ数
     learing_rate = 0.001   # 学習率
 
@@ -135,16 +134,17 @@ if __name__ == '__main__':
         plt.grid()
         plt.show()
 
-    n = 4  # how many digits we will display
-    plt.figure(figsize=(20, 4))
+    # 答え合わせ
+    n = 4   # 確認枚数
+    x_batch = xp.asarray(x_test[:n])
+    y_batch = best_model(x_batch)
+    y_batch = cuda.to_cpu(y_batch.data)
     for i in range(n):
-         x_batch = xp.asarray(x_test[i:i+batch_size])
-         x_batch = chainer.Variable(x_batch, volatile=True)
-         y_batch = best_model(x_batch)
-         a = x_test[i]
-         b = np.asarray(cuda.to_cpu(xp.stack(y_batch[i])))
-         # display original
-         plt.matshow(a.reshape(28, 28), cmap=plt.cm.gray)
-         # display reconstruction
-         plt.matshow(b.reshape(28, 28), cmap=plt.cm.gray)
-
+        x = x_test[i]
+        # 入力画像
+        plt.matshow(x.reshape(28, 28), cmap=plt.cm.gray)
+        plt.show()
+        # 出力画像
+        plt.matshow(y_batch[i].reshape(28, 28),
+                    cmap=plt.cm.gray)
+        plt.show()
