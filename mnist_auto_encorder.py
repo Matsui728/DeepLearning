@@ -30,12 +30,9 @@ def load_mnist(ndim):
 class AutoEncoder1d(chainer.Chain):
     def __init__(self):
         super(AutoEncoder1d, self).__init__(
-            l1=L.Linear(784, 500),
-            l2=L.Linear(500, 400),
-            l3=L.Linear(400, 300),
-            l4=L.Linear(300, 400),
-            l5=L.Linear(400, 500),
-            l6=L.Linear(500, 784)
+            l1=L.Linear(784, 2000),
+            l2=L.Linear(2000, 2000),
+            l3=L.Linear(2000, 784)
             )
 
     def __call__(self, x):
@@ -43,10 +40,7 @@ class AutoEncoder1d(chainer.Chain):
         assert x.shape[1] == 784  # x.shapeは(??, 784)である
         h = F.relu(self.l1(x))
         h = F.relu(self.l2(h))
-        h = F.relu(self.l3(h))
-        h = F.relu(self.l4(h))
-        h = F.relu(self.l5(h))
-        y = self.l6(h)
+        y = self.l3(h)
         assert y.shape == x.shape  # 入力と出力のshapeが同じである
         return y
 
@@ -54,9 +48,9 @@ class AutoEncoder1d(chainer.Chain):
 if __name__ == '__main__':
     # ハイパーパラメータ
     gpu = 0                # GPU>=0, CPU < 0
-    num_epochs = 500    # エポック数
+    num_epochs = 500   # エポック数
     batch_size = 500        # バッチ数
-    learing_rate = 0.001   # 学習率
+    learing_rate = 0.0001   # 学習率
 
     xp = cuda.cupy if gpu >= 0 else np
 
@@ -148,3 +142,10 @@ if __name__ == '__main__':
         plt.matshow(y_batch[i].reshape(28, 28),
                     cmap=plt.cm.gray)
         plt.show()
+    # ハイパーパラメータ等の表示
+    print('Best loss = {}', format(best_val_loss))
+    print('Hyper Parameters')
+    print('min loss = {}', format(best_val_loss))
+    print('epocks = {}', format(num_epochs))
+    print('epocks = {}', format(batch_size))
+    print('epocks = {}', format(learing_rate))
