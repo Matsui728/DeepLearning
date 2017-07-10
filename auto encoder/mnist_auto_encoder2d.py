@@ -35,10 +35,10 @@ class AutoEncoder2d(chainer.Chain):
             conv3=L.Convolution2D(150, 200, 3),
             conv4=L.Convolution2D(200, 300, 4),
 
-            dconv4=L.deconvolution_2d(300, 200, 3),
-            dconv3=L.deconvolution_2d(200, 150, 4),
-            dconv2=L.deconvolution_2d(150, 100, 4),
-            dconv1=L.deconvolution_2d(100, 1, 5)
+            dconv4=L.Deconvolution2D(300, 200, 3),
+            dconv3=L.Deconvolution2D(200, 150, 4),
+            dconv2=L.Deconvolution2D(150, 100, 4),
+            dconv1=L.Deconvolution2D(100, 1, 5)
             )
 
     def __call__(self, x):
@@ -50,8 +50,8 @@ class AutoEncoder2d(chainer.Chain):
         h = F.max_pooling_2d(h, 2)          # 4
         h = F.relu(self.dconv4(h))           # 6
         h = F.relu(self.dconv3(h))           # 9
-        h = F.relu(self.conv2(h))           # 12
-        h = F.unpooling_2d(h, 2)          # 24
+        h = F.relu(self.dconv2(h))           # 12
+        h = F.unpooling_2d(h, 2, outsize=(4, 4))          # 24
         y = self.dconv1(h)       # 28
         return y
 
