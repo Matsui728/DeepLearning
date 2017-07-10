@@ -147,5 +147,5 @@ if __name__ == '__main__':
     print('Hyper Parameters')
     print('min loss = {}', format(best_val_loss))
     print('epocks = {}', format(num_epochs))
-    print('epocks = {}', format(batch_size))
-    print('epocks = {}', format(learing_rate))
+    print('batch size = {}', format(batch_size))
+    print('learning rate = {}', format(learing_rate))
