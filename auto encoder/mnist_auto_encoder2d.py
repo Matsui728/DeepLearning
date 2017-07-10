@@ -51,7 +51,7 @@ class AutoEncoder2d(chainer.Chain):
         h = F.relu(self.dconv4(h))           # 6
         h = F.relu(self.dconv3(h))           # 9
         h = F.relu(self.dconv2(h))           # 12
-        h = F.unpooling_2d(h, 2, outsize=(4, 4))          # 24
+        h = F.unpooling_2d(h, 2, outsize=(24, 24))      # 24
         y = self.dconv1(h)       # 28
         return y
 
@@ -59,7 +59,7 @@ class AutoEncoder2d(chainer.Chain):
 if __name__ == '__main__':
     # ハイパーパラメータ
     gpu = 0                # GPU>=0, CPU < 0
-    num_epochs = 10    # エポック数
+    num_epochs = 100    # エポック数
     batch_size = 500        # バッチ数
     learing_rate = 0.001   # 学習率
 
@@ -145,9 +145,8 @@ if __name__ == '__main__':
     y_batch = best_model(x_batch)
     y_batch = cuda.to_cpu(y_batch.data)
     for i in range(n):
-        x = x_test[i]
         # 入力画像
-        plt.matshow(x_batch[i][0], cmap=plt.cm.gray)
+        plt.matshow(cuda.to_cpu(x_batch[i][0]), cmap=plt.cm.gray)
         plt.show()
         # 出力画像
         plt.matshow(y_batch[i][0], cmap=plt.cm.gray)
@@ -155,7 +154,7 @@ if __name__ == '__main__':
 
     # ハイパーパラメータ等の表示
     print('Hyper Parameters')
-    print('min loss = {}', format(best_val_loss))
-    print('epocks = {}', format(num_epochs))
-    print('batch size = {}', format(batch_size))
-    print('lernig rate = {}', format(learing_rate))
+    print('min loss = {}'. format(best_val_loss))
+    print('epocks = {}'. format(num_epochs))
+    print('batch size = {}'. format(batch_size))
+    print('lernig rate = {}'. format(learing_rate))
