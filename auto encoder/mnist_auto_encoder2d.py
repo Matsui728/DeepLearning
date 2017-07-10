@@ -31,19 +31,28 @@ class AutoEncoder2d(chainer.Chain):
     def __init__(self):
         super(AutoEncoder2d, self).__init__(
             conv1=L.Convolution2D(1, 100, 3),
-            conv2=L.Convolution2D(100, 100, 4),
-            dcon1=L.Deconvolution2D(100, 1, 3)
+            conv2=L.Convolution2D(100, 150, 3),
+            conv3=L.Convolution2D(150, 200, 3),
+            conv4=L.Convolution2D(200, 300, 4),
+
+            dconv4=L.deconvolution_2d(300, 200, 3),
+            dconv3=L.deconvolution_2d(200, 150, 4),
+            dconv2=L.deconvolution_2d(150, 100, 4),
+            dconv1=L.deconvolution_2d(100, 1, 5)
             )
 
     def __call__(self, x):
-        h = F.relu(self.conv1(x))
-        size_1 = h.shape[2:]
-        h = F.max_pooling_2d(h, 2)
-        h = F.relu(self.conv2(h))
-        h = F.max_pooling_2d(h, 2)
-        h = F.relu(self.dcon1(h))
-        h = F.unpooling_2d(h, 2, outsize=size_1)
-        y = self.F.unpooling_2d(h, 2, outsize=size_1)
+        h = F.relu(self.conv1(x))           # 26
+        h = F.relu(self.conv2(h))           # 24
+        h = F.relu(self.conv3(h))           # 22
+        h = F.max_pooling_2d(h, 2)          # 11
+        h = F.relu(self.conv4(h))           # 8
+        h = F.max_pooling_2d(h, 2)          # 4
+        h = F.relu(self.dconv4(h))           # 6
+        h = F.relu(self.dconv3(h))           # 9
+        h = F.relu(self.conv2(h))           # 12
+        h = F.unpooling_2d(h, 2)          # 24
+        y = self.dconv1(h)       # 28
         return y
 
 
