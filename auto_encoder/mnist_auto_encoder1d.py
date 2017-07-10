@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Created on Thu Jun 29 15:54:00 2017
+Created on Sun Jun 18 15:58:52 2017
 
 @author: kawalab
 """
@@ -27,53 +27,42 @@ def load_mnist(ndim):
     return train, test
 
 
-class AutoEncoder2d(chainer.Chain):
+class AutoEncoder1d(chainer.Chain):
     def __init__(self):
-        super(AutoEncoder2d, self).__init__(
-            conv1=L.Convolution2D(1, 100, 3),
-            conv2=L.Convolution2D(100, 150, 3),
-            conv3=L.Convolution2D(150, 200, 3),
-            conv4=L.Convolution2D(200, 300, 4),
-
-            dconv4=L.Deconvolution2D(300, 200, 3),
-            dconv3=L.Deconvolution2D(200, 150, 4),
-            dconv2=L.Deconvolution2D(150, 100, 4),
-            dconv1=L.Deconvolution2D(100, 1, 5)
+        super(AutoEncoder1d, self).__init__(
+            l1=L.Linear(784, 2000),
+            l2=L.Linear(2000, 2000),
+            l3=L.Linear(2000, 784)
             )
 
     def __call__(self, x):
-        h = F.relu(self.conv1(x))           # 26
-        h = F.relu(self.conv2(h))           # 24
-        h = F.relu(self.conv3(h))           # 22
-        h = F.max_pooling_2d(h, 2)          # 11
-        h = F.relu(self.conv4(h))           # 8
-        h = F.max_pooling_2d(h, 2)          # 4
-        h = F.relu(self.dconv4(h))           # 6
-        h = F.relu(self.dconv3(h))           # 9
-        h = F.relu(self.dconv2(h))           # 12
-        h = F.unpooling_2d(h, 2, outsize=(24, 24))      # 24
-        y = self.dconv1(h)       # 28
+        assert x.ndim == 2        # x.ndimは2である
+        assert x.shape[1] == 784  # x.shapeは(??, 784)である
+        h = F.relu(self.l1(x))
+        h = F.relu(self.l2(h))
+        y = self.l3(h)
+        assert y.shape == x.shape  # 入力と出力のshapeが同じである
         return y
 
 
 if __name__ == '__main__':
     # ハイパーパラメータ
     gpu = 0                # GPU>=0, CPU < 0
-    num_epochs = 100    # エポック数
+    num_epochs = 1   # エポック数
     batch_size = 500        # バッチ数
-    learing_rate = 0.001   # 学習率
+    learing_rate = 0.0001   # 学習率
 
     xp = cuda.cupy if gpu >= 0 else np
 
     # データ読み込み
-    train, test = load_mnist(3)
+    train, test = load_mnist(1)
     x_train, c_train = train
     x_test, c_test = test
     num_train = len(x_train)
     num_test = len(x_test)
 
     # モデル、オプティマイザ（chainer関数の使用）
-    model = AutoEncoder2d()
+    model = AutoEncoder1d()
     optimizer = optimizers.Adam(learing_rate)
     optimizer.setup(model)
 
@@ -145,16 +134,18 @@ if __name__ == '__main__':
     y_batch = best_model(x_batch)
     y_batch = cuda.to_cpu(y_batch.data)
     for i in range(n):
+        x = x_test[i]
         # 入力画像
-        plt.matshow(cuda.to_cpu(x_batch[i][0]), cmap=plt.cm.gray)
+        plt.matshow(x.reshape(28, 28), cmap=plt.cm.gray)
         plt.show()
         # 出力画像
-        plt.matshow(y_batch[i][0], cmap=plt.cm.gray)
+        plt.matshow(y_batch[i].reshape(28, 28),
+                    cmap=plt.cm.gray)
         plt.show()
-
     # ハイパーパラメータ等の表示
+    print('Best loss = {}', format(best_val_loss))
     print('Hyper Parameters')
-    print('min loss = {}'. format(best_val_loss))
-    print('epocks = {}'. format(num_epochs))
-    print('batch size = {}'. format(batch_size))
-    print('lernig rate = {}'. format(learing_rate))
+    print('min loss = {}', format(best_val_loss))
+    print('epocks = {}', format(num_epochs))
+    print('batch size = {}', format(batch_size))
+    print('learning rate = {}', format(learing_rate))
