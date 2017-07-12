@@ -59,9 +59,9 @@ class AutoEncoder2d(chainer.Chain):
 if __name__ == '__main__':
     # ハイパーパラメータ
     gpu = 0                # GPU>=0, CPU < 0
-    num_epochs = 100    # エポック数
-    batch_size = 500        # バッチ数
-    learing_rate = 0.01   # 学習率
+    num_epochs = 200    # エポック数
+    batch_size = 200        # バッチ数
+    learing_rate = 0.0001   # 学習率
 
     xp = cuda.cupy if gpu >= 0 else np
 
@@ -155,6 +155,6 @@ if __name__ == '__main__':
     # ハイパーパラメータ等の表示
     print('Hyper Parameters')
     print('min loss = {}'. format(best_val_loss))
-    print('epocks = {}'. format(num_epochs))
+    print('Epocks = {}'. format(num_epochs))
     print('batch size = {}'. format(batch_size))
-    print('lernig rate = {}'. format(learing_rate))
+    print('learnig rate = {}'. format(learing_rate))

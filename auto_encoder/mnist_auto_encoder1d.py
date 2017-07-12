@@ -48,8 +48,8 @@ class AutoEncoder1d(chainer.Chain):
 if __name__ == '__main__':
     # ハイパーパラメータ
     gpu = 0                # GPU>=0, CPU < 0
-    num_epochs = 1   # エポック数
-    batch_size = 500        # バッチ数
+    num_epochs = 500   # エポック数
+    batch_size = 100        # バッチ数
     learing_rate = 0.0001   # 学習率
 
     xp = cuda.cupy if gpu >= 0 else np
