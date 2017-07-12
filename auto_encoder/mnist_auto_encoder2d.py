@@ -90,55 +90,58 @@ if __name__ == '__main__':
     test_acc_log = []       # テスト用認識率log
     best_val_loss = np.inf  # 損失関数最小値保持値
     # 訓練定義
-    for epoch in range(num_epochs):
-        epoch_losses = []               # エポック内の損失値
-        for i in tqdm(range(0, num_train, batch_size)):
-            x_batch = xp.asarray(x_train[i:i+batch_size])  # 1->バッチサイズまでのループ
-            y_batch = model(x_batch)
+    try:
+        for epoch in range(num_epochs):
+            epoch_losses = []               # エポック内の損失値
+            for i in tqdm(range(0, num_train, batch_size)):
+                x_batch = xp.asarray(x_train[i:i+batch_size])
+                y_batch = model(x_batch)
 
-            # 損失関数の計算
-            loss = F.mean_squared_error(y_batch, x_batch)
-            model.cleargrads()              # 勾配のリセット
-            loss.backward()                 # 重みの更新
-            optimizer.update()
-            epoch_losses.append(loss.data)
+                # 損失関数の計算
+                loss = F.mean_squared_error(y_batch, x_batch)
+                model.cleargrads()              # 勾配のリセット
+                loss.backward()                 # 重みの更新
+                optimizer.update()
+                epoch_losses.append(loss.data)
 
-        epoch_loss = np.mean(cuda.to_cpu(xp.stack(epoch_losses)))   # エポックの平均損失
-        train_loss_log.append(epoch_loss)
+            epoch_loss = np.mean(cuda.to_cpu(xp.stack(epoch_losses)))
+            train_loss_log.append(epoch_loss)
 
-        # バリデーション
-        losses = []
-        accs = []
-        for i in tqdm(range(0, num_test, batch_size)):
-            epoch_losses = []              # エポック内の損失値
-            x_batch = xp.asarray(x_test[i:i+batch_size])  # 1->バッチサイズまでのループ
-            x_batch = chainer.Variable(x_batch, volatile=True)
-            y_batch = model(x_batch)
+            # バリデーション
+            losses = []
+            accs = []
+            for i in tqdm(range(0, num_test, batch_size)):
+                epoch_losses = []              # エポック内の損失値
+                x_batch = xp.asarray(x_test[i:i+batch_size])  # 1->バッチサイズまでのループ
+                x_batch = chainer.Variable(x_batch, volatile=True)
+                y_batch = model(x_batch)
 
-            # 損失関数の計算
-            loss = F.mean_squared_error(y_batch, x_batch)
-            losses.append(loss.data)
-        test_loss = np.mean(cuda.to_cpu(xp.stack(losses)))   # エポックの平均損失
-        test_loss_log.append(test_loss)
+                # 損失関数の計算
+                loss = F.mean_squared_error(y_batch, x_batch)
+                losses.append(loss.data)
+            test_loss = np.mean(cuda.to_cpu(xp.stack(losses)))   # エポックの平均損失
+            test_loss_log.append(test_loss)
 
-        # 最小損失ならそのモデルを保持
-        if loss.data < best_val_loss:
-            best_model = deepcopy(model)
-            best_val_loss = loss.data
-            best_epoch = epoch
+            # 最小損失ならそのモデルを保持
+            if loss.data < best_val_loss:
+                best_model = deepcopy(model)
+                best_val_loss = loss.data
+                best_epoch = epoch
 
-        # エポック数、認識率、損失値の表示
-        print('{}: loss = {}'.format(epoch, epoch_loss))
+            # エポック数、認識率、損失値の表示
+            print('{}: loss = {}'.format(epoch, epoch_loss))
 
-        # グラフの表示
-        plt.figure(figsize=(10, 4))
-        plt.title('Loss')
-        plt.plot(train_loss_log, label='train loss')
-        plt.plot(test_loss_log, label='test loss')
-        plt.legend()
-        plt.grid()
-        plt.show()
+            # グラフの表示
+            plt.figure(figsize=(10, 4))
+            plt.title('Loss')
+            plt.plot(train_loss_log, label='train loss')
+            plt.plot(test_loss_log, label='test loss')
+            plt.legend()
+            plt.grid()
+            plt.show()
 
+    except KeyboardInterrupt:
+        print('Interrupted by Ctrl+c!')
     # 答え合わせ
     n = 4   # 確認枚数
     x_batch = xp.asarray(x_test[:n])
