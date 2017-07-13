@@ -11,6 +11,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 
+import mnist_loader
+
 import chainer
 import chainer.functions as F
 import chainer.links as L
