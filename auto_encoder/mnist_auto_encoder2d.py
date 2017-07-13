@@ -11,7 +11,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 
-import mnist_loader
+# from mnist_loader import load_mnist
 
 import chainer
 import chainer.functions as F
@@ -20,7 +20,6 @@ from chainer import cuda
 from chainer import optimizers
 from chainer.datasets import get_mnist
 from chainer.dataset import concat_examples
-
 
 def load_mnist(ndim):
     train, test = get_mnist(ndim=ndim)

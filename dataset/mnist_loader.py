@@ -98,7 +98,7 @@ def _change_one_hot_label(X):
     return T
 
 
-def load_mnist(normalize=True, flatten=True, one_hot_label=False):
+def load_mnist(normalize=True, flatten=False, one_hot_label=False):
     """MNISTデータセットの読み込み
 
     Parameters
