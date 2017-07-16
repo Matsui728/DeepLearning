@@ -44,7 +44,7 @@ def make_test_images_np(self):
     num_images = struct.unpack('>i', data[4:8])
     width = struct.unpack('>i', data[8:12])
     height = struct.unpack('>i', data[12:16])
-    body = data[16:]  #  実際の画素値は16バイト目から格納されている
+    body = data[16:]  # 実際の画素値は16バイト目から格納されている
 
     fmt = 'B'* (num_images * width * height)  # 'B' はunsigned char．10000*28*28個のucharを一気に読み込む
     pixels = struct.unpack(fmt, body)
@@ -120,8 +120,6 @@ def MnistLoader(ndim=2):
         test_labels_data = make_test_labeles_np()
     else:
         test_labels_data = test_labels.npy
-
-    return train_images_data, test_images_data, train_labels_data, test_labels_data
 
     if ndim == 1:
         train_images_data = train_images_data.reshape(1, 28 * 28)
