@@ -153,4 +153,4 @@ if __name__ == '__main__':
     plt.matshow(test_images[0][0], cmap=plt.cm.gray)
     plt.show()
     print('train label = {}'. format(train_labels[0]))
-    print('train label = {}'. format(train_labels[0]))
+    print('test label = {}'. format(test_labels[0]))
