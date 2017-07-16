@@ -76,7 +76,7 @@ def make_train_labeles_np(self):
 
 
 # make cashe for test labels
-def make_train_labeles_np(self):
+def make_test_labeles_np(self):
     test_labels = 't10k-labels-idx1-ubyte.gz'
     with open(test_labels, 'rb') as f:
         data = f.read()
@@ -95,36 +95,34 @@ def make_train_labeles_np(self):
 
 
 # データが残っていたら使用，残っていなかったらキャッシュ作成
-def MnistUse(self):
-    root_dir = 'http://yann.lecun.com/exdb/mnist'
+def MnistLoader(ndim=2):
+    root_url = 'http://yann.lecun.com/exdb/mnist'
     if not Path('train_images.npy').exists():
-        urllib.urlretrieve(root_dir, 'train-images-idx3-ubyte.gz')  # データファイルのDL
+        urllib.request.urlretrieve(root_url, 'train-images-idx3-ubyte.gz')  # データファイルのDL
         train_images_data = make_train_images_np()
     else:
         train_images_data = train_images.npy
 
     if not Path('test_images.npy').exists():
-        urllib.urlretrieve(root_dir, 't10k-images-idx3-ubyte.gz')  # データファイルのDL
+        urllib.request.urlretrieve(root_url, 't10k-images-idx3-ubyte.gz')  # データファイルのDL
         train_images_data = make_test_images_np()
     else:
         test_images_data = test_images.npy
 
     if not Path('train_labels.npy').exists():
-        urllib.urlretrieve(root_dir, 'train-labels-idx1-ubyte.gz')      # データファイルのDL
-        train_labels_data = make_train_labels_np()
+        urllib.request.urlretrieve(root_url, 'train-labels-idx1-ubyte.gz')      # データファイルのDL
+        train_labels_data = make_train_labeles_np()
     else:
-        train_labels_data = trainlabels.npy
+        train_labels_data = train_labels.npy
 
     if not Path('test_labels.npy').exists():
-        urllib.urlretrieve(root_dir, 't10k-labels-idx1-ubyte.gz')      # データファイルの
-        test_labels_data = make_test_labels_np()
+        urllib.request.urlretrieve(root_url, 't10k-labels-idx1-ubyte.gz')      # データファイルの
+        test_labels_data = make_test_labeles_np()
     else:
         test_labels_data = test_labels.npy
 
     return train_images_data, test_images_data, train_labels_data, test_labels_data
 
-
-def MnistLoader(ndim=2):
     if ndim == 1:
         train_images_data = train_images_data.reshape(1, 28 * 28)
         test_images_data = test_images_data.reshape(1, 28 * 28)
@@ -149,7 +147,6 @@ def MnistLoader(ndim=2):
 if __name__ == '__main__':
     # train_images test_images, train_labels, test_labels = MnistUse()
     # train_images, test_images, train_labels, test_labels = MnistLoader(3)
-    MnistUse()
     train_images, test_images, train_labels, test_labels = MnistLoader(3)
     plt.matshow(train_images, cmap=plt.cm.gray)
     plt.show()
