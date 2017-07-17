@@ -7,13 +7,13 @@ Spyderエディタ
 
 import urllib
 import numpy as np
-import matplotlib as plt
+import matplotlib.pyplot as plt
 from pathlib import Path
 
 import gzip
 
 
-# make cashe for test images
+# make cashe for train images
 def make_train_images_np():
     train_images = 'train-images-idx3-ubyte.gz'
 
@@ -29,12 +29,13 @@ def make_train_images_np():
     images = pixels.reshape(num_images, width, height, 1)
     np.save('train_images.npy', images)  # ndarrayをファイルに保存する
 
+    print('Making cashe for train images is completed.')
     return images
 
 
 # make cashe for test images
 def make_test_images_np():
-    test_images = 't10k-images.idx3-ubyte.gz'
+    test_images = 't10k-images-idx3-ubyte.gz'
 
     with gzip.open(test_images, 'rb') as f:
         data = f.read()
@@ -48,6 +49,7 @@ def make_test_images_np():
     images = pixels.reshape(num_images, width, height, 1)
     np.save('test_images.npy', images)  # ndarrayをファイルに保存する
 
+    print('Making cashe for test images is completed.')
     return images
 
 
@@ -61,6 +63,7 @@ def make_train_labeles_np():
     labels = np.frombuffer(data, np.uint8, -1, 8)
     np.save('train_labels.npy', labels)  # ndarrayをファイルに保存する
 
+    print('Making cashe for train labels is completed.')
     return labels
 
 
@@ -73,6 +76,7 @@ def make_test_labeles_np():
     labels = np.frombuffer(data, np.uint8, -1, 8)
     np.save('test_labels.npy', labels)  # ndarrayをファイルに保存する
 
+    print('Making cashe for test labels is completed.')
     return labels
 
 
@@ -89,7 +93,7 @@ def MnistLoader(ndim=2):
     if not Path('test_images.npy').exists():
         urllib.request.urlretrieve(root_url + '/t10k-images-idx3-ubyte.gz',
                                    't10k-images-idx3-ubyte.gz')  # データファイルのDL
-        train_images_data = make_test_images_np()
+        test_images_data = make_test_images_np()
     else:
         test_images_data = test_images.npy
 
@@ -110,31 +114,22 @@ def MnistLoader(ndim=2):
     if ndim == 1:
         train_images_data = train_images_data.reshape(1, 28 * 28)
         test_images_data = test_images_data.reshape(1, 28 * 28)
-        train_labels_data = train_labels_data.reshape(1, 28 * 28)
-        test_labels_data = test_labels_data.reshape(1, 28 * 28)
 
     elif ndim == 2:
         train_images_data = train_images_data.reshape(1, 28, 28)
         test_images_data = test_images_data.reshape(1, 28, 28)
-        train_labels_data = train_labels_data.reshape(1, 28, 28)
-        test_labels_data = test_labels_data.reshape(1, 28, 28)
 
     elif ndim == 3:
         train_images_data = train_images_data.reshape(-1, 1, 28, 28)
         test_images_data = test_images_data.reshape(-1, 1, 28, 28)
-        train_labels_data = train_labels_data.reshape(-1, 1, 28, 28)
-        test_labels_data = test_labels_data.reshape(-1, 1, 28, 28)
 
     else:
         raise ValueError('You need define ndim between from 1 to 3.')
 
-    return train_images_data, test_images_data,
-    train_labels_data, test_labels_data
+    return train_images_data, test_images_data, train_labels_data, test_labels_data
 
 
 if __name__ == '__main__':
-    # train_images test_images, train_labels, test_labels = MnistUse()
-    # train_images, test_images, train_labels, test_labels = MnistLoader(3)
     train_images, test_images, train_labels, test_labels = MnistLoader(3)
     plt.matshow(train_images[0][0], cmap=plt.cm.gray)
     plt.show()
