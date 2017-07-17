@@ -8,12 +8,11 @@ import struct
 
 import urllib
 import numpy as np
-import matplotlib.pyplot as plt
+import matplotlib as plt
 from pathlib import Path
 
-
 # make cashe for test images
-def make_train_images_np(self):
+def make_train_images_np():
     train_images = 'train-images-idx3-ubyte.gz'
 
     with open(train_images, 'rb') as f:
@@ -22,9 +21,10 @@ def make_train_images_np(self):
     num_images = struct.unpack('>i', data[4:8])
     width = struct.unpack('>i', data[8:12])
     height = struct.unpack('>i', data[12:16])
-    body = data[16:]  #  実際の画素値は16バイト目から格納されている
+    body = data[16:]  # 実際の画素値は16バイト目から格納されている
 
-    fmt = 'B'* (num_images  * width * height)  # 'B' はunsigned char．10000*28*28個のucharを一気に読み込む
+    # fmt = 'b' * (num_images * width * height)
+    fmt = 'B' * (60000 * 28 * 28)
     pixels = struct.unpack(fmt, body)
     # Reshape(10000, 28 , 28)
     images = np.array(pixels).reshape(num_images, width, height)
@@ -34,7 +34,7 @@ def make_train_images_np(self):
 
 
 # make cashe for test images
-def make_test_images_np(self):
+def make_test_images_np():
     test_images = 't10k-images.idx3-ubyte'
 
     with open(test_images, 'rb') as f:
@@ -46,7 +46,7 @@ def make_test_images_np(self):
     height = struct.unpack('>i', data[12:16])
     body = data[16:]  # 実際の画素値は16バイト目から格納されている
 
-    fmt = 'B'* (num_images * width * height)  # 'B' はunsigned char．10000*28*28個のucharを一気に読み込む
+    fmt = 'B'* (10000 * 28 * 28)  # 'B' はunsigned char．10000*28*28個のucharを一気に読み込む
     pixels = struct.unpack(fmt, body)
     # Reshape(10000, 28 , 28)
     images = np.array(pixels).reshape(num_images, width, height)
@@ -56,8 +56,8 @@ def make_test_images_np(self):
 
 
 # make cashe for train labels
-def make_train_labeles_np(self):
-    train_labels = 'train-labels-idx1-ubyte.gz'
+def make_train_labeles_np():
+    train_labels = 'train-labels-idx1-ubyte'
 
     with open(train_labels, 'rb') as f:
         data = f.read()
@@ -66,7 +66,7 @@ def make_train_labeles_np(self):
     num_items = struct.unpack('>i', data[4:8])
     body = data[8:]
 
-    fmt = 'B'* (num_items)  # 'B' はunsigned char．10000個のucharを一気に読み込む
+    fmt = 'B'* (60000)  # 'B' はunsigned char．10000個のucharを一気に読み込む
     items = struct.unpack(fmt, body)
     # Reshape(10000, 28 , 28)
     labels = np.array(items)
@@ -76,8 +76,8 @@ def make_train_labeles_np(self):
 
 
 # make cashe for test labels
-def make_test_labeles_np(self):
-    test_labels = 't10k-labels-idx1-ubyte.gz'
+def make_test_labeles_np():
+    test_labels = 't10k-labels-idx1-ubyte'
     with open(test_labels, 'rb') as f:
         data = f.read()
 
@@ -85,7 +85,7 @@ def make_test_labeles_np(self):
     num_items = struct.unpack('>i', data[4:8])
     body = data[8:]
 
-    fmt = 'B'* (num_items)  # 'B' はunsigned char．10000個のucharを一気に読み込む
+    fmt = 'B'* (10000)  # 'B' はunsigned char．10000個のucharを一気に読み込む
     items = struct.unpack(fmt, body)
     # Reshape(10000, 28 , 28)
     labels = np.array(items)
@@ -139,7 +139,11 @@ def MnistLoader(ndim=2):
         train_labels_data = train_labels_data.reshape(-1, 1, 28, 28)
         test_labels_data = test_labels_data.reshape(-1, 1, 28, 28)
 
-    return train_images_data, test_images_data, train_labels_data, test_labels_data
+    else:
+        raise ValueError('You need define ndim between from 1 to 3.')
+
+    return train_images_data, test_images_data,
+    train_labels_data, test_labels_data
 
 
 if __name__ == '__main__':
