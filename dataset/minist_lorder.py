@@ -4,31 +4,29 @@ Spyderエディタ
 
 これは一時的なスクリプトファイルです
 """
-import struct
 
 import urllib
 import numpy as np
 import matplotlib as plt
 from pathlib import Path
 
+import gzip
+
 
 # make cashe for test images
 def make_train_images_np():
     train_images = 'train-images-idx3-ubyte.gz'
 
-    with open(train_images, 'rb') as f:
+    with gzip.open(train_images, 'rb') as f:
         data = f.read()
-    header = struct.unpack('>i', data[:4])  # 16バイトヘッダのうちの始め4バイトの並びをヘッダとする．
-    num_images = struct.unpack('>i', data[4:8])
-    width = struct.unpack('>i', data[8:12])
-    height = struct.unpack('>i', data[12:16])
-    body = data[16:]  # 実際の画素値は16バイト目から格納されている
 
-    # fmt = 'b' * (num_images * width * height)
-    fmt = 'B' * (60000 * 28 * 28)
-    pixels = struct.unpack(fmt, body)
-    # Reshape(60000, 28 , 28)
-    images = np.array(pixels).reshape(num_images, width, height)
+    num_images = int.from_bytes(data[4:8], 'big')
+    width = int.from_bytes(data[8:12], 'big')
+    height = int.from_bytes(data[12:16], 'big')
+    pixels = np.frombuffer(data, np.uint8, -1, 16)
+
+    # Reshape(60000, 28 , 28, 1)
+    images = pixels.reshape(num_images, width, height, 1)
     np.save('train_images.npy', images)  # ndarrayをファイルに保存する
 
     return images
@@ -36,21 +34,18 @@ def make_train_images_np():
 
 # make cashe for test images
 def make_test_images_np():
-    test_images = 't10k-images.idx3-ubyte'
+    test_images = 't10k-images.idx3-ubyte.gz'
 
-    with open(test_images, 'rb') as f:
+    with gzip.open(test_images, 'rb') as f:
         data = f.read()
 
-    header = struct.unpack('>i', data[:4])  # 16バイトヘッダのうちの始め4バイトの並びをヘッダとする．
-    num_images = struct.unpack('>i', data[4:8])
-    width = struct.unpack('>i', data[8:12])
-    height = struct.unpack('>i', data[12:16])
-    body = data[16:]  # 実際の画素値は16バイト目から格納されている
+    num_images = int.from_bytes(data[4:8], 'big')
+    width = int.from_bytes(data[8:12], 'big')
+    height = int.from_bytes(data[12:16], 'big')
+    pixels = np.frombuffer(data, np.uint8, -1, 16)
 
-    fmt = 'B'* (10000 * 28 * 28)  # 'B' はunsigned char．10000*28*28個のucharを一気に読み込む
-    pixels = struct.unpack(fmt, body)
-    # Reshape(10000, 28 , 28)
-    images = np.array(pixels).reshape(num_images, width, height)
+    # Reshape(10000, 28 , 28, 1)
+    images = pixels.reshape(num_images, width, height, 1)
     np.save('test_images.npy', images)  # ndarrayをファイルに保存する
 
     return images
@@ -58,18 +53,12 @@ def make_test_images_np():
 
 # make cashe for train labels
 def make_train_labeles_np():
-    train_labels = 'train-labels-idx1-ubyte'
+    train_labels = 'train-labels-idx1-ubyte.gz'
 
-    with open(train_labels, 'rb') as f:
+    with gzip.open(train_labels, 'rb') as f:
         data = f.read()
 
-    header = struct.unpack('>i', data[:4])  # 8バイトヘッダのうちの始め4バイトの並びをヘッダとする．
-    num_items = struct.unpack('>i', data[4:8])
-    body = data[8:]
-
-    fmt = 'B'* (60000)  # 'B' はunsigned char．60000個のucharを一気に読み込む
-    items = struct.unpack(fmt, body)
-    labels = np.array(items)
+    labels = np.frombuffer(data, np.uint8, -1, 8)
     np.save('train_labels.npy', labels)  # ndarrayをファイルに保存する
 
     return labels
@@ -77,17 +66,11 @@ def make_train_labeles_np():
 
 # make cashe for test labels
 def make_test_labeles_np():
-    test_labels = 't10k-labels-idx1-ubyte'
-    with open(test_labels, 'rb') as f:
+    test_labels = 't10k-labels-idx1-ubyte.gz'
+    with gzip.open(test_labels, 'rb') as f:
         data = f.read()
 
-    header = struct.unpack('>i', data[:4])  # 8バイトヘッダのうちの始め4バイトの並びをヘッダとする．
-    num_items = struct.unpack('>i', data[4:8])
-    body = data[8:]
-
-    fmt = 'B'* (10000)  # 'B' はunsigned char．10000個のucharを一気に読み込む
-    items = struct.unpack(fmt, body)
-    labels = np.array(items)
+    labels = np.frombuffer(data, np.uint8, -1, 8)
     np.save('test_labels.npy', labels)  # ndarrayをファイルに保存する
 
     return labels
@@ -97,25 +80,29 @@ def make_test_labeles_np():
 def MnistLoader(ndim=2):
     root_url = 'http://yann.lecun.com/exdb/mnist'
     if not Path('train_images.npy').exists():
-        urllib.request.urlretrieve(root_url, 'train-images-idx3-ubyte.gz')  # データファイルのDL
+        urllib.request.urlretrieve(root_url + '/train-images-idx3-ubyte.gz',
+                                   'train-images-idx3-ubyte.gz')  # データファイルのDL
         train_images_data = make_train_images_np()
     else:
         train_images_data = train_images.npy
 
     if not Path('test_images.npy').exists():
-        urllib.request.urlretrieve(root_url, 't10k-images-idx3-ubyte.gz')  # データファイルのDL
+        urllib.request.urlretrieve(root_url + '/t10k-images-idx3-ubyte.gz',
+                                   't10k-images-idx3-ubyte.gz')  # データファイルのDL
         train_images_data = make_test_images_np()
     else:
         test_images_data = test_images.npy
 
     if not Path('train_labels.npy').exists():
-        urllib.request.urlretrieve(root_url, 'train-labels-idx1-ubyte.gz')      # データファイルのDL
+        urllib.request.urlretrieve(root_url + '/train-labels-idx1-ubyte.gz',
+                                   'train-labels-idx1-ubyte.gz')   # データファイルのDL
         train_labels_data = make_train_labeles_np()
     else:
         train_labels_data = train_labels.npy
 
     if not Path('test_labels.npy').exists():
-        urllib.request.urlretrieve(root_url, 't10k-labels-idx1-ubyte.gz')      # データファイルの
+        urllib.request.urlretrieve(root_url + '/t10k-labels-idx1-ubyte.gz',
+                                   't10k-labels-idx1-ubyte.gz')   # データファイルのDL
         test_labels_data = make_test_labeles_np()
     else:
         test_labels_data = test_labels.npy
