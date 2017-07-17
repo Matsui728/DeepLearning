@@ -11,6 +11,7 @@ import numpy as np
 import matplotlib as plt
 from pathlib import Path
 
+
 # make cashe for test images
 def make_train_images_np():
     train_images = 'train-images-idx3-ubyte.gz'
@@ -26,7 +27,7 @@ def make_train_images_np():
     # fmt = 'b' * (num_images * width * height)
     fmt = 'B' * (60000 * 28 * 28)
     pixels = struct.unpack(fmt, body)
-    # Reshape(10000, 28 , 28)
+    # Reshape(60000, 28 , 28)
     images = np.array(pixels).reshape(num_images, width, height)
     np.save('train_images.npy', images)  # ndarrayをファイルに保存する
 
@@ -66,9 +67,8 @@ def make_train_labeles_np():
     num_items = struct.unpack('>i', data[4:8])
     body = data[8:]
 
-    fmt = 'B'* (60000)  # 'B' はunsigned char．10000個のucharを一気に読み込む
+    fmt = 'B'* (60000)  # 'B' はunsigned char．60000個のucharを一気に読み込む
     items = struct.unpack(fmt, body)
-    # Reshape(10000, 28 , 28)
     labels = np.array(items)
     np.save('train_labels.npy', labels)  # ndarrayをファイルに保存する
 
@@ -87,7 +87,6 @@ def make_test_labeles_np():
 
     fmt = 'B'* (10000)  # 'B' はunsigned char．10000個のucharを一気に読み込む
     items = struct.unpack(fmt, body)
-    # Reshape(10000, 28 , 28)
     labels = np.array(items)
     np.save('test_labels.npy', labels)  # ndarrayをファイルに保存する
 
