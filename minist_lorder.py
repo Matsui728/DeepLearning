@@ -51,44 +51,44 @@ def mnist_loader(ndim=2):
     train_labels_cache = 'train_labels.npy'
     test_labels_cache = 'test_labels.npy'
 
-    root_url = 'http://yann.lecun.com/exdb/mnist'
+    root_url = 'http://yann.lecun.com/exdb/mnist/'
 
     if not Path(train_image_cache).exists():
-        urllib.request.urlretrieve(root_url + '/train-images-idx3-ubyte.gz',
-                                   'train-images-idx3-ubyte.gz')  # データファイルのDL
+        urllib.request.urlretrieve(root_url + train_images_file,
+                                   train_images_file)  # データファイルのDL
 
         train_images_data = make_images_np(train_images_file)
-        np.save('train_images.npy', train_images_data)  # ndarrayをファイルに保存する
+        np.save(train_image_cache, train_images_data)  # ndarrayをファイルに保存する
         print('Making cashe for train images is completed.')
     else:
         train_images_data = np.load(train_image_cache)
 
     if not Path(test_image_cache).exists():
-        urllib.request.urlretrieve(root_url + '/t10k-images-idx3-ubyte.gz',
-                                   't10k-images-idx3-ubyte.gz')  # データファイルのDL
+        urllib.request.urlretrieve(root_url + test_images_file,
+                                   test_images_file)  # データファイルのDL
 
         test_images_data = make_images_np(test_images_file)
-        np.save('test_images.npy', test_images_data)  # ndarrayをファイルに保存する
+        np.save(test_image_cache, test_images_data)  # ndarrayをファイルに保存する
         print('Making cashe for test images is completed.')
     else:
         test_images_data = np.load(test_image_cache)
 
     if not Path(train_labels_cache).exists():
-        urllib.request.urlretrieve(root_url + '/train-labels-idx1-ubyte.gz',
-                                   'train-labels-idx1-ubyte.gz')   # データファイルのDL
+        urllib.request.urlretrieve(root_url + train_labels_file,
+                                   train_labels_file)   # データファイルのDL
 
         train_labels_data = make_labeles_np(train_labels_file)
-        np.save('train_labels.npy', train_labels_data)  # ndarrayをファイルに保存する
+        np.save(train_labels_cache, train_labels_data)  # ndarrayをファイルに保存する
         print('Making cashe for train labels is completed.')
     else:
         train_labels_data = np.load(train_labels_cache)
 
     if not Path(test_labels_cache).exists():
-        urllib.request.urlretrieve(root_url + '/t10k-labels-idx1-ubyte.gz',
-                                   't10k-labels-idx1-ubyte.gz')   # データファイルのDL
+        urllib.request.urlretrieve(root_url + test_labels_file,
+                                   test_labels_file)   # データファイルのDL
 
         test_labels_data = make_labeles_np(test_labels_file)
-        np.save('test_labels.npy', test_labels_data)  # ndarrayをファイルに保存する
+        np.save(test_labels_cache, test_labels_data)  # ndarrayをファイルに保存する
         print('Making cashe for test labels is completed.')
     else:
         test_labels_data = np.load(test_labels_cache)
