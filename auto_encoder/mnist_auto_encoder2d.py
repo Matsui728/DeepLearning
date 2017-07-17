@@ -20,6 +20,13 @@ from chainer import cuda
 from chainer import optimizers
 from chainer.datasets import get_mnist
 from chainer.dataset import concat_examples
+import configparser
+
+
+cp = configparser.ConfigParser()
+cp.read('config')
+root_dir = cp.get('dataset_dir', 'dir_path')
+
 
 def load_mnist(ndim):
     train, test = get_mnist(ndim=ndim)
