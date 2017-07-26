@@ -38,7 +38,11 @@ def make_labeles_np(file_path):
 
 
 # データが残っていたら使用，残っていなかったらキャッシュ作成
-def mnist_loader(ndim=2):
+def mnist_loader(ndim=2, dataset_root='C:/dataset'):
+    dataset_dir = Path(dataset_root) / 'mnist'
+    if not dataset_dir.exists():
+        dataset_dir.mkdir(exist_ok=True)
+
     # Data_file_path
     train_images_file = 'train-images-idx3-ubyte.gz'
     test_images_file = 't10k-images-idx3-ubyte.gz'
@@ -46,48 +50,52 @@ def mnist_loader(ndim=2):
     test_labels_file = 't10k-labels-idx1-ubyte.gz'
 
     # cache_file_path
-    train_image_cache = 'train_images.npy'
-    test_image_cache = 'test_images.npy'
-    train_labels_cache = 'train_labels.npy'
-    test_labels_cache = 'test_labels.npy'
+    train_image_cache = dataset_dir / 'train_images.npy'
+    test_image_cache = dataset_dir / 'test_images.npy'
+    train_labels_cache = dataset_dir / 'train_labels.npy'
+    test_labels_cache = dataset_dir / 'test_labels.npy'
 
     root_url = 'http://yann.lecun.com/exdb/mnist/'
 
+    train_image_path = dataset_dir / train_images_file
     if not Path(train_image_cache).exists():
         urllib.request.urlretrieve(root_url + train_images_file,
-                                   train_images_file)  # データファイルのDL
+                                   train_image_path)  # データファイルのDL
 
-        train_images_data = make_images_np(train_images_file)
+        train_images_data = make_images_np(train_image_path)
         np.save(train_image_cache, train_images_data)  # ndarrayをファイルに保存する
         print('Making cashe for train images is completed.')
     else:
         train_images_data = np.load(train_image_cache)
 
+    test_image_path = dataset_dir / test_images_file
     if not Path(test_image_cache).exists():
         urllib.request.urlretrieve(root_url + test_images_file,
-                                   test_images_file)  # データファイルのDL
+                                   test_image_path)  # データファイルのDL
 
-        test_images_data = make_images_np(test_images_file)
+        test_images_data = make_images_np(test_image_path)
         np.save(test_image_cache, test_images_data)  # ndarrayをファイルに保存する
         print('Making cashe for test images is completed.')
     else:
         test_images_data = np.load(test_image_cache)
 
+    train_labels_path = dataset_dir / train_labels_file
     if not Path(train_labels_cache).exists():
         urllib.request.urlretrieve(root_url + train_labels_file,
-                                   train_labels_file)   # データファイルのDL
+                                   train_labels_path)   # データファイルのDL
 
-        train_labels_data = make_labeles_np(train_labels_file)
+        train_labels_data = make_labeles_np(train_labels_path)
         np.save(train_labels_cache, train_labels_data)  # ndarrayをファイルに保存する
         print('Making cashe for train labels is completed.')
     else:
         train_labels_data = np.load(train_labels_cache)
 
+    test_labels_path = dataset_dir / test_labels_file
     if not Path(test_labels_cache).exists():
         urllib.request.urlretrieve(root_url + test_labels_file,
-                                   test_labels_file)   # データファイルのDL
+                                   test_labels_path)   # データファイルのDL
 
-        test_labels_data = make_labeles_np(test_labels_file)
+        test_labels_data = make_labeles_np(test_labels_path)
         np.save(test_labels_cache, test_labels_data)  # ndarrayをファイルに保存する
         print('Making cashe for test labels is completed.')
     else:
@@ -108,7 +116,8 @@ def mnist_loader(ndim=2):
     else:
         raise ValueError('You need define ndim between from 1 to 3.')
 
-    return train_images_data, test_images_data, train_labels_data, test_labels_data
+    return (train_images_data, test_images_data,
+            train_labels_data, test_labels_data)
 
 
 if __name__ == '__main__':
