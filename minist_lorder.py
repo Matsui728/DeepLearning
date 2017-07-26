@@ -116,7 +116,8 @@ def mnist_loader(ndim=2, dataset_root='C:/dataset'):
     else:
         raise ValueError('You need define ndim between from 1 to 3.')
 
-    return train_images_data, test_images_data, train_labels_data, test_labels_data
+    return (train_images_data, test_images_data,
+            train_labels_data, test_labels_data)
 
 
 if __name__ == '__main__':
