@@ -10,7 +10,12 @@ import numpy as np
 import matplotlib.pyplot as plt
 from pathlib import Path
 
+import configparser
 import gzip
+
+cp = configparser.ConfigParser()
+cp.read('config')
+root_dir = cp.get('dataset_dir', 'dir_path')
 
 
 # make cashe for images
@@ -38,7 +43,7 @@ def make_labeles_np(file_path):
 
 
 # データが残っていたら使用，残っていなかったらキャッシュ作成
-def mnist_loader(ndim=2, dataset_root='C:/dataset'):
+def mnist_loader(ndim=2, dataset_root=root_dir):
     dataset_dir = Path(dataset_root) / 'mnist'
     if not dataset_dir.exists():
         dataset_dir.mkdir(exist_ok=True)
