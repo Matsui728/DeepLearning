@@ -136,12 +136,12 @@ if __name__ == '__main__':
 
     gpu, num_epochs, batch_size, learning_rate = training_parameters()
 
-    xp = cuda.cupy if gpu == 0 else np
+    xp = cuda.cupy if gpu >= 0 else np
     model = CNN()
     optimizer = optimizers.Adam(learning_rate)
     optimizer.setup(model)
 
-    if gpu == 0:
+    if gpu >= 0:
         cuda.get_device(gpu).use()
         model.to_gpu()
 
