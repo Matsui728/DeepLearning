@@ -33,9 +33,9 @@ def load_mnist(ndim=2):
 def training_parameters():
     cp = configparser.ConfigParser()
     cp.read('config')
-    use_device = cp.get('Hyper_parameteters', 'gpu_on')
-    num_epochs = cp.get('Hyper_parameteters', 'number_epochs')
-    batch_size = cp.get('Hyper_parameteters', 'batch_size')
+    use_device = int(cp.get('Hyper_parameteters', 'gpu_on'))
+    num_epochs = int(cp.get('Hyper_parameteters', 'number_epochs'))
+    batch_size = int(cp.get('Hyper_parameteters', 'batch_size'))
     learning_rate = cp.get('Hyper_parameteters', 'learning_rate')
 
     return use_device, num_epochs, batch_size, learning_rate

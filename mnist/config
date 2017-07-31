@@ -2,7 +2,7 @@
 dir_path = C:/dataset
 
 [Hyper_parameteters]
-gpu_on = 0                # GPU>=0, CPU < 0
-number_epochs = 200    # エポック数
-batch_size = 200        # バッチ数
-learning_rate = 0.0001   # 学習率
+gpu_on = 0               
+number_epochs = 200   
+batch_size = 200      
+learning_rate = 0.0001   
