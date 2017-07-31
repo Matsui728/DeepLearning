@@ -36,7 +36,7 @@ def training_parameters():
     use_device = int(cp.get('Hyper_parameteters', 'gpu_on'))
     num_epochs = int(cp.get('Hyper_parameteters', 'number_epochs'))
     batch_size = int(cp.get('Hyper_parameteters', 'batch_size'))
-    learning_rate = cp.get('Hyper_parameteters', 'learning_rate')
+    learning_rate = float(cp.get('Hyper_parameteters', 'learning_rate'))
 
     return use_device, num_epochs, batch_size, learning_rate
 
@@ -46,8 +46,8 @@ def train_part(model, num_train, x_train, c_train, xp, batch_size):
     epoch_losses = []               # エポック内の損失値
     epoch_accs = []                 # エポック内の認識率
     for i in tqdm(range(0, num_train, batch_size)):
-        x_batch = xp.asarray(x_train[i:i+batch_size])  # 1->バッチサイズまでのループ
-        ｃ_batch = xp.asarray(c_train[i:i+batch_size])
+        x_batch = xp.asarray(x_train[i:i+batch_size], dtype=xp.float32)
+        ｃ_batch = xp.asarray(c_train[i:i+batch_size], dtype=xp.int32)
         y_batch = model(x_batch)
 
         # 損失関数の計算
@@ -74,8 +74,8 @@ def validation(model, num_test, x_test, c_test, xp, batch_size):      # バリ�
     for i in tqdm(range(0, num_test, batch_size)):
         losses = []               # エポック内の損失値
         accs = []                 # エポック内の認識率
-        x_batch = xp.asarray(x_test[i:i+batch_size])  # 1->バッチサイズまでのループ
-        ｃ_batch = xp.asarray(c_test[i:i+batch_size])
+        x_batch = xp.asarray(x_test[i:i+batch_size], dtype=xp.float32)
+        ｃ_batch = xp.asarray(c_test[i:i+batch_size], dtype=xp.int32)
 
         x_batch = chainer.Variable(x_batch)
         ｃ_batch = chainer.Variable(c_batch)
@@ -96,7 +96,7 @@ def validation(model, num_test, x_test, c_test, xp, batch_size):      # バリ�
     return loss, test_loss_log, test_acc_log
 
 
-def save_best_model(loss, best_val_loss):
+def save_best_model(loss, model, best_val_loss):
     # 最小損失ならそのモデルを保持
     if loss.data < best_val_loss:
         best_model = deepcopy(model)
@@ -132,7 +132,7 @@ def print_result_log(epoch, train_loss_log, test_loss_log,
 if __name__ == '__main__':
 
     (x_train, x_test, c_train, c_test,
-     num_train, num_test) = load_mnist(ndim=2)
+     num_train, num_test) = load_mnist(ndim=3)
 
     gpu, num_epochs, batch_size, learning_rate = training_parameters()
 
@@ -160,7 +160,7 @@ if __name__ == '__main__':
                                                        x_test, c_test,
                                                        xp, batch_size)
 
-        best_model, best_val_loss, best_epoch = save_best_model(loss,
+        best_model, best_val_loss, best_epoch = save_best_model(loss, model,
                                                                 best_val_loss)
 
         print_result_log(epoch, train_loss_log, test_loss_log,
