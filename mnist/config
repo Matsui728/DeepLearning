@@ -3,6 +3,6 @@ dir_path = C:/dataset
 
 [Hyper_parameteters]
 gpu_on = 0               
-number_epochs = 200   
+number_epochs = 10  
 batch_size = 200      
 learning_rate = 0.0001   

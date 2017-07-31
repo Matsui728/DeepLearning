@@ -96,12 +96,17 @@ def validation(model, num_test, x_test, c_test, xp, batch_size):      # バリ�
     return loss, test_loss_log, test_acc_log
 
 
-def save_best_model(loss, model, best_val_loss):
+def save_best_model(loss, model, best_model, best_val_loss, best_epoch):
     # 最小損失ならそのモデルを保持
     if loss.data < best_val_loss:
         best_model = deepcopy(model)
         best_val_loss = loss.data
         best_epoch = epoch
+
+    else:
+        best_model = best_model
+        best_val_loss = best_val_loss
+        best_epoch = best_epoch
 
     return best_model, best_val_loss, best_epoch
 
@@ -149,6 +154,8 @@ if __name__ == '__main__':
     train_acc_log = []      # 訓練認識率log
     test_loss_log = []      # テスト用損失関数log
     test_acc_log = []       # テスト用認識率log
+    best_model = []
+    best_epoch = []
     best_val_loss = np.inf  # 損失関数最小値保持値
 
     for epoch in range(num_epochs):
@@ -160,8 +167,15 @@ if __name__ == '__main__':
                                                        x_test, c_test,
                                                        xp, batch_size)
 
-        best_model, best_val_loss, best_epoch = save_best_model(loss, model,
-                                                                best_val_loss)
+        (best_model, best_val_loss,
+         best_epoch) = save_best_model(loss, model, best_model,
+                                       best_val_loss, best_epoch)
 
         print_result_log(epoch, train_loss_log, test_loss_log,
                          train_acc_log, test_acc_log)
+
+    print('Hyper Parameters')
+    print('min loss = {}'. format(best_val_loss))
+    print('Epocks = {}'. format(num_epochs))
+    print('batch size = {}'. format(batch_size))
+    print('learnig rate = {}'. format(learning_rate))
