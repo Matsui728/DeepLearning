@@ -10,7 +10,6 @@ import matplotlib.pyplot as plt
 
 
 from chainercv.datasets import CamVidDataset
-from chainer.datasets import TransformDataset
 from chainer.dataset import concat_examples
 
 
@@ -33,15 +32,7 @@ def CamVid_loader(dataset_dir=root_dir):
 
     # Dataset
     train = CamVidDataset(dataset_dir, split='train')
-    # train = TransformDataset(train, transform)
     test = CamVidDataset(dataset_dir, split='val')
-
-    """
-    train_images = np.array(train[:, 0])
-    train_classes = np.array(train[:, 1])
-    test_images = np.array(test[:, 0])
-    test_classes = np.array(test[:, 1])
-    """
 
     train = concat_examples(train)
     test = concat_examples(test)
