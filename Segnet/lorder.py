@@ -11,6 +11,7 @@ import matplotlib.pyplot as plt
 
 from chainercv.datasets import CamVidDataset
 from chainer.datasets import TransformDataset
+from chainer.dataset import concat_examples
 
 
 import configparser
@@ -32,7 +33,7 @@ def CamVid_loader(dataset_dir=root_dir):
 
     # Dataset
     train = CamVidDataset(dataset_dir, split='train')
-    train = TransformDataset(train, transform)
+    # train = TransformDataset(train, transform)
     test = CamVidDataset(dataset_dir, split='val')
 
     """
@@ -41,15 +42,17 @@ def CamVid_loader(dataset_dir=root_dir):
     test_images = np.array(test[:, 0])
     test_classes = np.array(test[:, 1])
     """
-    train_images = train[:, 0]
-    train_labels = train[:, 1]
-    test_images = test[:, 0]
-    test_labels = test[:, 1]
+
+    train = concat_examples(train)
+    test = concat_examples(test)
+
+    train_images = train[:][0]
+    train_labels = train[:][1]
+    test_images = test[:][0]
+    test_labels = test[:][1]
 
     train_images /= 255.0
-    train_labels /= 255.0
     test_images /= 255.0
-    test_labels /= 255.0
 
     return train_images, test_images, train_labels, test_labels
 
@@ -60,11 +63,14 @@ if __name__ == '__main__':
 
     a = train_images[0].transpose(1, 2, 0)
     b = train_labels[0]
-    c = test_images[0].transepose(1, 2, 0)
-    d = train_labels[0]
+    c = test_images[0].transpose(1, 2, 0)
+    d = test_labels[0]
 
     plt.imshow(a)
+    plt.show()
     plt.imshow(b)
-
+    plt.show()
     plt.imshow(c)
+    plt.show()
     plt.imshow(d)
+    plt.show()
