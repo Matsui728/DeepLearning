@@ -104,15 +104,13 @@ def expression_result(x_test, best_model, xp):
     y_batch = best_model(x_batch)
     y_batch = cuda.to_cpu(y_batch.data)
 
-    print(x_batch.shape)
-    print(y_batch.shape)
-    print(y_batch[0])
     for i in range(n):
         # 入力画像
         plt.imshow(cuda.to_cpu(x_batch[i].transpose(1, 2, 0)))
         plt.show()
         # 出力画像
-        plt.imshow(y_batch[i].transpose(1, 2, 0))
+        y_result = y_batch[i].argmax(0)
+        plt.matshow(y_result)
         plt.show()
 
 

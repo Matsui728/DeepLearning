@@ -194,6 +194,7 @@ class SegNetBasic(chainer.Chain):
 
         h = F.unpooling_2d(h, 2, outsize=outsize1)
         h = F.relu(self.bnorm_decode1(self.conv_decode1(h)))
+
         y = self.conv_classifier(h)
         return y
 

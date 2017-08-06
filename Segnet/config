@@ -3,6 +3,6 @@ dir_path = C:\dataset\Segnet\CamVid
 
 [Hyper_parameteters]
 gpu_on = 0               
-number_epochs = 1 
+number_epochs = 15 
 batch_size = 5      
 learning_rate = 0.0001   
