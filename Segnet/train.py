@@ -16,7 +16,7 @@ import chainer.functions as F
 
 from chainer import cuda
 from chainer import optimizers
-from segnet_network import SegNet
+from segnet_network import SegNetBasic
 
 from loader import CamVid_loader
 
@@ -97,18 +97,22 @@ def validation(model, num_test, x_test, c_test, xp, batch_size):      # バリ�
     return loss, test_loss_log, test_acc_log
 
 
-def expression_result(x_test, best_model):
+def expression_result(x_test, best_model, xp):
     # 答え合わせ
     n = 4   # 確認枚数
     x_batch = xp.asarray(x_test[:n])
     y_batch = best_model(x_batch)
     y_batch = cuda.to_cpu(y_batch.data)
+
+    print(x_batch.shape)
+    print(y_batch.shape)
+    print(y_batch[0])
     for i in range(n):
         # 入力画像
-        plt.imshow(cuda.to_cpu(x_batch[i][0].transpose(1, 2, 0)))
+        plt.imshow(cuda.to_cpu(x_batch[i].transpose(1, 2, 0)))
         plt.show()
         # 出力画像
-        plt.matshow(y_batch[i][0].transpose(1, 2, 0))
+        plt.imshow(y_batch[i].transpose(1, 2, 0))
         plt.show()
 
 
@@ -158,7 +162,7 @@ if __name__ == '__main__':
     gpu, num_epochs, batch_size, learning_rate = training_parameters()
 
     xp = cuda.cupy if gpu >= 0 else np
-    model = SegNet()
+    model = SegNetBasic()
     optimizer = optimizers.Adam(learning_rate)
     optimizer.setup(model)
 
@@ -190,9 +194,7 @@ if __name__ == '__main__':
         print_result_log(epoch, train_loss_log, test_loss_log,
                          train_acc_log, test_acc_log)
 
-    expression_result(x_test, best_model)
-
-
+    expression_result(x_test, best_model, xp)
 
     print('Hyper Parameters')
     print('min loss = {}'. format(best_val_loss))

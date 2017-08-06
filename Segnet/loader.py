@@ -52,10 +52,13 @@ if __name__ == '__main__':
     (train_images, test_images,
      train_labels, test_labels) = np.array(CamVid_loader())
 
+    print(train_labels.shape)
+
     a = train_images[0].transpose(1, 2, 0)
     b = train_labels[0]
     c = test_images[0].transpose(1, 2, 0)
     d = test_labels[0]
+
 
     plt.imshow(a)
     plt.show()
