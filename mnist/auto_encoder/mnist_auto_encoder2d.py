@@ -114,8 +114,8 @@ if __name__ == '__main__':
             for i in tqdm(range(0, num_test, batch_size)):
                 epoch_losses = []              # エポック内の損失値
                 x_batch = xp.asarray(x_test[i:i+batch_size])  # 1->バッチサイズまでのループ
-                x_batch = chainer.Variable(x_batch, volatile=True)
-                y_batch = model(x_batch)
+                with chainer.no_backprop_mode():
+                    y_batch = model(x_batch)
 
                 # 損失関数の計算
                 loss = F.mean_squared_error(y_batch, x_batch)

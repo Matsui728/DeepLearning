@@ -13,18 +13,19 @@ import configparser
 
 import chainer
 import chainer.functions as F
+
 from chainer import cuda
 from chainer import optimizers
+from segnet_network import SegNet
 
-from mnist_loader import mnist_loader
-from mnist_network import CNN
+from loader import CamVid_loader
 
 
-def load_mnist(ndim=2):
+def load_CamVid():
     cp = configparser.ConfigParser()
     cp.read('config')
     root_dir = cp.get('dataset_dir', 'dir_path')
-    x_train, x_test, c_train, c_test = mnist_loader(ndim, root_dir)
+    x_train, x_test, c_train, c_test = CamVid_loader(root_dir)
     num_train = len(x_train)
     num_test = len(x_test)
     return x_train, x_test, c_train, c_test, num_train, num_test
@@ -96,6 +97,21 @@ def validation(model, num_test, x_test, c_test, xp, batch_size):      # バリ�
     return loss, test_loss_log, test_acc_log
 
 
+def expression_result(x_test, best_model):
+    # 答え合わせ
+    n = 4   # 確認枚数
+    x_batch = xp.asarray(x_test[:n])
+    y_batch = best_model(x_batch)
+    y_batch = cuda.to_cpu(y_batch.data)
+    for i in range(n):
+        # 入力画像
+        plt.imshow(cuda.to_cpu(x_batch[i][0].transpose(1, 2, 0)))
+        plt.show()
+        # 出力画像
+        plt.matshow(y_batch[i][0].transpose(1, 2, 0))
+        plt.show()
+
+
 def save_best_model(loss, model, best_model, best_val_loss, best_epoch):
     # 最小損失ならそのモデルを保持
     if loss.data < best_val_loss:
@@ -137,12 +153,12 @@ def print_result_log(epoch, train_loss_log, test_loss_log,
 if __name__ == '__main__':
 
     (x_train, x_test, c_train, c_test,
-     num_train, num_test) = load_mnist(ndim=3)
+     num_train, num_test) = load_CamVid()
 
     gpu, num_epochs, batch_size, learning_rate = training_parameters()
 
     xp = cuda.cupy if gpu >= 0 else np
-    model = CNN()
+    model = SegNet()
     optimizer = optimizers.Adam(learning_rate)
     optimizer.setup(model)
 
@@ -173,6 +189,10 @@ if __name__ == '__main__':
 
         print_result_log(epoch, train_loss_log, test_loss_log,
                          train_acc_log, test_acc_log)
+
+    expression_result(x_test, best_model)
+
+
 
     print('Hyper Parameters')
     print('min loss = {}'. format(best_val_loss))
