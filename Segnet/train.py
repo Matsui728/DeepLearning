@@ -16,6 +16,7 @@ import chainer.functions as F
 
 from chainer import cuda
 from chainer import optimizers
+from chainer import serializers
 from segnet_network import SegNetBasic
 
 from loader import CamVid_loader
@@ -66,7 +67,7 @@ def train_part(model, num_train, x_train, c_train, xp, batch_size):
     train_loss_log.append(epoch_loss)
     train_acc_log.append(epoch_acc)
 
-    return train_loss_log, train_acc_log
+    return train_loss_log, train_acc_log, epoch_loss, epoch_acc
 
 
 def validation(model, num_test, x_test, c_test, xp, batch_size):      # バリデーション
@@ -97,7 +98,7 @@ def validation(model, num_test, x_test, c_test, xp, batch_size):      # バリ�
     return loss, test_loss_log, test_acc_log
 
 
-def expression_result(x_test, best_model, xp):
+def check_result(x_test, best_model, xp):
     # 答え合わせ
     n = 4   # 確認枚数
     x_batch = xp.asarray(x_test[:n])
@@ -105,11 +106,13 @@ def expression_result(x_test, best_model, xp):
     y_batch = cuda.to_cpu(y_batch.data)
 
     for i in range(n):
+        y_result = y_batch[i].argmax(0)
         # 入力画像
+        plt.figure(figsize=(9, 3))
         plt.imshow(cuda.to_cpu(x_batch[i].transpose(1, 2, 0)))
         plt.show()
         # 出力画像
-        y_result = y_batch[i].argmax(0)
+        plt.figure(figsize=(9, 3))
         plt.matshow(y_result)
         plt.show()
 
@@ -130,12 +133,14 @@ def save_best_model(loss, model, best_model, best_val_loss, best_epoch):
 
 
 def print_result_log(epoch, train_loss_log, test_loss_log,
-                     train_acc_log, test_acc_log):
+                     train_acc_log, test_acc_log, epoch_loss, epoch_acc):
 
+    # エポック数、認識率、損失値の表示
+    print('{}: loss = {}, accuracy = {}'.format(epoch, epoch_loss, epoch_acc))
     # グラフの表示
-    plt.figure(figsize=(10, 4))
-    plt.title('Loss')
+    plt.figure(figsize=(9, 3))
     plt.subplot(1, 2, 1)
+    plt.title('Loss')
     plt.plot(train_loss_log, label='train loss')
     plt.plot(test_loss_log, label='test loss')
     plt.legend()
@@ -175,24 +180,35 @@ if __name__ == '__main__':
     best_model = []
     best_epoch = []
     best_val_loss = np.inf  # 損失関数最小値保持値
+    epoch_loss = []
+    epoch_acc = []
+    try:
+        for epoch in range(num_epochs):
+            (train_loss_log, train_acc_log,
+             epoch_loss, epoch_acc) = train_part(model, num_train,
+                                                 x_train, c_train,
+                                                 xp, batch_size)
 
-    for epoch in range(num_epochs):
-        train_loss_log, train_acc_log = train_part(model, num_train,
-                                                   x_train, c_train,
-                                                   xp, batch_size)
+            loss, test_loss_log, test_acc_log = validation(model, num_test,
+                                                           x_test, c_test,
+                                                           xp, batch_size)
 
-        loss, test_loss_log, test_acc_log = validation(model, num_test,
-                                                       x_test, c_test,
-                                                       xp, batch_size)
+            (best_model, best_val_loss,
+             best_epoch) = save_best_model(loss, model, best_model,
+                                           best_val_loss, best_epoch)
 
-        (best_model, best_val_loss,
-         best_epoch) = save_best_model(loss, model, best_model,
-                                       best_val_loss, best_epoch)
+            print_result_log(epoch, train_loss_log, test_loss_log,
+                             train_acc_log, test_acc_log,
+                             epoch_loss, epoch_acc)
 
-        print_result_log(epoch, train_loss_log, test_loss_log,
-                         train_acc_log, test_acc_log)
+    except KeyboardInterrupt:
+        print('Interrupted by Ctrl+c!')
 
-    expression_result(x_test, best_model, xp)
+    # best_modelの保存
+    serializers.save_npz('my.SegNetBasic', best_model)
+    serializers.save_npz('my.state', optimizer)
+
+    check_result(x_test, best_model, xp)
 
     print('Hyper Parameters')
     print('min loss = {}'. format(best_val_loss))
