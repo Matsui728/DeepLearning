@@ -100,20 +100,20 @@ def validation(model, num_test, x_test, c_test, xp, batch_size):      # バリ�
 
 def check_result(x_test, best_model, xp):
     # 答え合わせ
-    n = 4   # 確認枚数
+    n = 4    # 確認枚数
+    K = 11  # クラス数
     x_batch = xp.asarray(x_test[:n])
     y_batch = best_model(x_batch)
     y_batch = cuda.to_cpu(y_batch.data)
-
     for i in range(n):
-        y_result = y_batch[i].argmax(0)
+
         # 入力画像
         plt.figure(figsize=(9, 3))
         plt.imshow(cuda.to_cpu(x_batch[i].transpose(1, 2, 0)))
         plt.show()
         # 出力画像
         plt.figure(figsize=(9, 3))
-        plt.matshow(y_result)
+        plt.matshow(y_batch[i].argmax(0) / (K - 1), cmap=plt.cm.rainbow)
         plt.show()
 
 
