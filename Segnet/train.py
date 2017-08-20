@@ -35,15 +35,15 @@ def load_CamVid():
 def training_parameters():
     cp = configparser.ConfigParser()
     cp.read('config')
-    use_device = int(cp.get('Hyper_parameteters', 'gpu_on'))
-    num_epochs = int(cp.get('Hyper_parameteters', 'number_epochs'))
-    batch_size = int(cp.get('Hyper_parameteters', 'batch_size'))
-    learning_rate = float(cp.get('Hyper_parameteters', 'learning_rate'))
+    use_device = int(cp.get('Hyper_parameters', 'gpu_on'))
+    num_epochs = int(cp.get('Hyper_parameters', 'number_epochs'))
+    batch_size = int(cp.get('Hyper_parameters', 'batch_size'))
+    learning_rate = float(cp.get('Hyper_parameters', 'learning_rate'))
 
     return use_device, num_epochs, batch_size, learning_rate
 
 
-def train_part(model, num_train, x_train, c_train, xp, batch_size):
+def train_part(model, num_train, x_train, c_train, batch_size):
 
     epoch_losses = []               # エポック内の損失値
     epoch_accs = []                 # エポック内の認識率
@@ -70,12 +70,10 @@ def train_part(model, num_train, x_train, c_train, xp, batch_size):
     return train_loss_log, train_acc_log, epoch_loss, epoch_acc
 
 
-def validation(model, num_test, x_test, c_test, xp, batch_size):      # バリデーション
+def validation(model, num_test, x_test, c_test, batch_size):      # バリデーション
     losses = []
     accs = []
     for i in tqdm(range(0, num_test, batch_size)):
-        losses = []               # エポック内の損失値
-        accs = []                 # エポック内の認識率
         x_batch = xp.asarray(x_test[i:i+batch_size], dtype=xp.float32)
         ｃ_batch = xp.asarray(c_test[i:i+batch_size], dtype=xp.int32)
 
@@ -90,15 +88,15 @@ def validation(model, num_test, x_test, c_test, xp, batch_size):      # バリ�
 
         losses.append(loss.data)
         accs.append(accuracy.data)
-    test_loss = np.mean(cuda.to_cpu(xp.stack(losses)))   # エポックの平均損失
+    test_loss = np.mean(cuda.to_cpu(xp.stack(losses)))
     test_acc = np.mean(cuda.to_cpu(xp.stack(accs)))     # エポックの平均認識率
     test_loss_log.append(test_loss)
     test_acc_log.append(test_acc)
 
-    return loss, test_loss_log, test_acc_log
+    return test_loss_log, test_acc_log, test_loss, test_acc
 
 
-def check_result(x_test, best_model, xp):
+def check_result(x_test, best_model):
     # 答え合わせ
     n = 4    # 確認枚数
     K = 11  # クラス数
@@ -117,11 +115,11 @@ def check_result(x_test, best_model, xp):
         plt.show()
 
 
-def save_best_model(loss, model, best_model, best_val_loss, best_epoch):
+def save_best_model(test_loss, model, best_model, best_val_loss, best_epoch):
     # 最小損失ならそのモデルを保持
-    if loss.data < best_val_loss:
+    if test_loss < best_val_loss:
         best_model = deepcopy(model)
-        best_val_loss = loss.data
+        best_val_loss = test_loss
         best_epoch = epoch
 
     else:
@@ -187,14 +185,15 @@ if __name__ == '__main__':
             (train_loss_log, train_acc_log,
              epoch_loss, epoch_acc) = train_part(model, num_train,
                                                  x_train, c_train,
-                                                 xp, batch_size)
+                                                 batch_size)
 
-            loss, test_loss_log, test_acc_log = validation(model, num_test,
-                                                           x_test, c_test,
-                                                           xp, batch_size)
+            (test_loss_log, test_acc_log,
+             test_loss, test_acc) = validation(model, num_test,
+                                               x_test, c_test,
+                                               batch_size)
 
             (best_model, best_val_loss,
-             best_epoch) = save_best_model(loss, model, best_model,
+             best_epoch) = save_best_model(test_loss, model, best_model,
                                            best_val_loss, best_epoch)
 
             print_result_log(epoch, train_loss_log, test_loss_log,
@@ -208,10 +207,10 @@ if __name__ == '__main__':
     serializers.save_npz('my.SegNetBasic', best_model)
     serializers.save_npz('my.state', optimizer)
 
-    check_result(x_test, best_model, xp)
+    check_result(x_test, best_model)
 
     print('Hyper Parameters')
     print('min loss = {}'. format(best_val_loss))
-    print('Epocks = {}'. format(num_epochs))
+    print('Epochs = {}'. format(num_epochs))
     print('batch size = {}'. format(batch_size))
-    print('learnig rate = {}'. format(learning_rate))
+    print('learning rate = {}'. format(learning_rate))

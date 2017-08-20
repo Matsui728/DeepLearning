@@ -141,7 +141,7 @@ class SegNet(chainer.Chain):
 
 
 class SegNetBasic(chainer.Chain):
-    def __init__(self, in_channel=3, out_channel=11, c1=64, c2=64, c3=64,
+    def __init__(self, in_channel=3, out_channel=11, c1=12, c2=24, c3=32,
                  c4=64, c5=64, filter_size1=3):
         super(SegNetBasic, self).__init__(
             # Convolution Parts
