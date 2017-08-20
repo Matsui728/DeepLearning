@@ -168,32 +168,32 @@ class SegNetBasic(chainer.Chain):
     def __call__(self, x):
 
         outsize1 = x.shape[-2:]
-        h = F.dropout(F.relu(self.bnorm1(self.conv1(x))))
+        h = F.relu(self.bnorm1(self.conv1(x)))
         h = F.max_pooling_2d(h, 2)
 
         outsize2 = h.shape[-2:]
-        h = F.dropout(F.relu(self.bnorm2(self.conv2(h))))
+        h = F.relu(self.bnorm2(self.conv2(h)))
         h = F.max_pooling_2d(h, 2)
 
         outsize3 = h.shape[-2:]
-        h = F.dropout(F.relu(self.bnorm3(self.conv3(h))))
+        h = F.relu(self.bnorm3(self.conv3(h)))
         h = F.max_pooling_2d(h, 2)
 
         outsize4 = h.shape[-2:]
-        h = F.dropout(F.relu(self.bnorm4(self.conv4(h))))
+        h = F.relu(self.bnorm4(self.conv4(h)))
         h = F.max_pooling_2d(h, 2)
 
         h = F.unpooling_2d(h, 2, outsize=outsize4)
-        h = F.dropout(F.relu(self.bnorm_decode4(self.conv_decode4(h))))
+        h = F.relu(self.bnorm_decode4(self.conv_decode4(h)))
 
         h = F.unpooling_2d(h, 2, outsize=outsize3)
-        h = F.dropout(F.relu(self.bnorm_decode3(self.conv_decode3(h))))
+        h = F.relu(self.bnorm_decode3(self.conv_decode3(h)))
 
         h = F.unpooling_2d(h, 2, outsize=outsize2)
-        h = F.dropout(F.relu(self.bnorm_decode2(self.conv_decode2(h))))
+        h = F.relu(self.bnorm_decode2(self.conv_decode2(h)))
 
         h = F.unpooling_2d(h, 2, outsize=outsize1)
-        h = F.dropout(F.relu(self.bnorm_decode1(self.conv_decode1(h))))
+        h = F.relu(self.bnorm_decode1(self.conv_decode1(h)))
 
         y = self.conv_classifier(h)
         return y
