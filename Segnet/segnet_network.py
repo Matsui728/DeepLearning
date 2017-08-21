@@ -162,7 +162,7 @@ class SegNetBasic(chainer.Chain):
             bnorm_decode2=L.BatchNormalization(c1, initial_beta=0.001),
             conv_decode1=L.Convolution2D(c1, c1, ksize=filter_size1, pad=1),
             bnorm_decode1=L.BatchNormalization(c1, initial_beta=0.001),
-            conv_classifier=L.Convolution2D(c1, out_channel, 1, 1, 0,)
+            conv_classifier=L.Convolution2D(c1, out_channel, 1, 1, 0)
             )
 
     def __call__(self, x):
