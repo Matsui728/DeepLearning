@@ -141,8 +141,8 @@ class SegNet(chainer.Chain):
 
 
 class SegNetBasic(chainer.Chain):
-    def __init__(self, in_channel=3, out_channel=11, c1=12, c2=24, c3=32,
-                 c4=64, c5=64, filter_size1=3):
+    def __init__(self, in_channel=3, out_channel=11, c1=24, c2=32, c3=64,
+                 c4=64, c5=128, filter_size1=3):
         super(SegNetBasic, self).__init__(
             # Convolution Parts
             conv1=L.Convolution2D(in_channel, c1, ksize=filter_size1, pad=1),
@@ -193,7 +193,7 @@ class SegNetBasic(chainer.Chain):
         h = F.relu(self.bnorm_decode2(self.conv_decode2(h)))
 
         h = F.unpooling_2d(h, 2, outsize=outsize1)
-        h = F.relu(self.bnorm_decode1(self.conv_decode1(h)))
+        h = F.dropout(F.relu(self.bnorm_decode1(self.conv_decode1(h))))
 
         y = self.conv_classifier(h)
         return y

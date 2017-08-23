@@ -43,21 +43,25 @@ def training_parameters():
     return use_device, num_epochs, batch_size, learning_rate
 
 
-def train_part(model, num_train, x_train, c_train, batch_size):
+def train_part(model, optimizer, num_train, x_train, c_train, batch_size):
 
     epoch_losses = []               # エポック内の損失値
     epoch_accs = []                 # エポック内の認識率
+    model.cleargrads()
     for i in tqdm(range(0, num_train, batch_size)):
         x_batch = xp.asarray(x_train[i:i+batch_size], dtype=xp.float32)
         ｃ_batch = xp.asarray(c_train[i:i+batch_size], dtype=xp.int32)
-        y_batch = model(x_batch)
+        with chainer.using_config('train', True):
+            y_batch = model(x_batch)
 
-        # 損失関数の計算
-        loss = F.softmax_cross_entropy(y_batch, c_batch)
-        model.cleargrads()              # 勾配のリセット
-        loss.backward()                 # 重みの更新
-        accuracy = F.accuracy(y_batch, c_batch)       # 認識率
+            # 損失関数の計算
+            loss = F.softmax_cross_entropy(y_batch, c_batch)
+            accuracy = F.accuracy(y_batch, c_batch)       # 認識率
+
+            loss.backward()                 # 重みの更新
+
         optimizer.update()
+        model.cleargrads()              # 勾配のリセット
 
         epoch_losses.append(loss.data)
         epoch_accs.append(accuracy.data)
@@ -80,11 +84,12 @@ def validation(model, num_test, x_test, c_test, batch_size):      # バリデー
         x_batch = chainer.Variable(x_batch)
         ｃ_batch = chainer.Variable(c_batch)
         with chainer.no_backprop_mode():
-            y_batch = model(x_batch)
+            with chainer.using_config('train', False):
+                y_batch = model(x_batch)
 
-        # 損失関数の計算
-        loss = F.softmax_cross_entropy(y_batch, c_batch)
-        accuracy = F.accuracy(y_batch, c_batch)       # 認識率
+                # 損失関数の計算
+                loss = F.softmax_cross_entropy(y_batch, c_batch)
+                accuracy = F.accuracy(y_batch, c_batch)       # 認識率
 
         losses.append(loss.data)
         accs.append(accuracy.data)
@@ -183,7 +188,7 @@ if __name__ == '__main__':
     try:
         for epoch in range(num_epochs):
             (train_loss_log, train_acc_log,
-             epoch_loss, epoch_acc) = train_part(model, num_train,
+             epoch_loss, epoch_acc) = train_part(model, optimizer, num_train,
                                                  x_train, c_train,
                                                  batch_size)
 
