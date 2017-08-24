@@ -137,64 +137,69 @@ class SegNet(chainer.Chain):
         h = F.unpooling_2d(h, 2, outsize=outsize1)
         h = F.relu(self.bnorm10_1(self.dconv1_1(h)))
         y = F.relu(self.bnorm10_2(self.dconv2_2(h)))
+
+        return y
+
+
+class CBRPart(chainer.Chain):
+    def __init__(self, in_channel, out_channel, filter_size=3):
+        super(CBRPart, self).__init__(
+            conv=L.Convolution2D(in_channel, out_channel,
+                                 ksize=filter_size, pad=1),
+            bnorm=L.BatchNormalization(out_channel, initial_beta=0.001)
+            )
+
+    def __call__(self, x):
+        y = F.relu(self.bnorm(self.conv(x)))
         return y
 
 
 class SegNetBasic(chainer.Chain):
-    def __init__(self, in_channel=3, out_channel=11, c1=24, c2=32, c3=64,
+    def __init__(self, in_channel=3, out_channel=11, c1=48, c2=64, c3=64,
                  c4=64, c5=128, filter_size1=3):
         super(SegNetBasic, self).__init__(
             # Convolution Parts
-            conv1=L.Convolution2D(in_channel, c1, ksize=filter_size1, pad=1),
-            bnorm1=L.BatchNormalization(c1, initial_beta=0.001),
-            conv2=L.Convolution2D(c1, c2, ksize=filter_size1, pad=1),
-            bnorm2=L.BatchNormalization(c2, initial_beta=0.001),
-            conv3=L.Convolution2D(c2, c3, ksize=filter_size1, pad=1),
-            bnorm3=L.BatchNormalization(c3, initial_beta=0.001),
-            conv4=L.Convolution2D(c3, c4, ksize=filter_size1, pad=1),
-            bnorm4=L.BatchNormalization(c4, initial_beta=0.001),
-
-            conv_decode4=L.Convolution2D(c4, c3, ksize=filter_size1, pad=1),
-            bnorm_decode4=L.BatchNormalization(c3, initial_beta=0.001),
-            conv_decode3=L.Convolution2D(c3, c2, ksize=filter_size1, pad=1),
-            bnorm_decode3=L.BatchNormalization(c2, initial_beta=0.001),
-            conv_decode2=L.Convolution2D(c2, c1, ksize=filter_size1, pad=1),
-            bnorm_decode2=L.BatchNormalization(c1, initial_beta=0.001),
-            conv_decode1=L.Convolution2D(c1, c1, ksize=filter_size1, pad=1),
-            bnorm_decode1=L.BatchNormalization(c1, initial_beta=0.001),
+            p1=CBRPart(in_channel, c2),
+            p2=CBRPart(c2, c3),
+            p3=CBRPart(c3, c4),
+            p4=CBRPart(c4, c5),
+            p5=CBRPart(c5, c4),
+            p6=CBRPart(c4, c3),
+            p7=CBRPart(c3, c2),
+            p8=CBRPart(c2, c1),
             conv_classifier=L.Convolution2D(c1, out_channel, 1, 1, 0)
             )
 
     def __call__(self, x):
 
         outsize1 = x.shape[-2:]
-        h = F.relu(self.bnorm1(self.conv1(x)))
+        h = self.p1(x)
         h = F.max_pooling_2d(h, 2)
 
         outsize2 = h.shape[-2:]
-        h = F.relu(self.bnorm2(self.conv2(h)))
+        h = self.p2(h)
         h = F.max_pooling_2d(h, 2)
 
         outsize3 = h.shape[-2:]
-        h = F.relu(self.bnorm3(self.conv3(h)))
+        h = self.p3(h)
         h = F.max_pooling_2d(h, 2)
 
         outsize4 = h.shape[-2:]
-        h = F.relu(self.bnorm4(self.conv4(h)))
+        h = self.p4(h)
         h = F.max_pooling_2d(h, 2)
 
         h = F.unpooling_2d(h, 2, outsize=outsize4)
-        h = F.relu(self.bnorm_decode4(self.conv_decode4(h)))
+        h = self.p5(h)
 
         h = F.unpooling_2d(h, 2, outsize=outsize3)
-        h = F.relu(self.bnorm_decode3(self.conv_decode3(h)))
+        h = self.p6(h)
 
         h = F.unpooling_2d(h, 2, outsize=outsize2)
-        h = F.relu(self.bnorm_decode2(self.conv_decode2(h)))
+        h = self.p7(h)
 
         h = F.unpooling_2d(h, 2, outsize=outsize1)
-        h = F.dropout(F.relu(self.bnorm_decode1(self.conv_decode1(h))))
-
+        # h = F.dropout(self.p8(h))
+        h = self.p8(h)
         y = self.conv_classifier(h)
         return y
 
