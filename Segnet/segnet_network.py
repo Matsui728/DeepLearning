@@ -159,47 +159,55 @@ class SegNetBasic(chainer.Chain):
                  c4=64, c5=128, filter_size1=3):
         super(SegNetBasic, self).__init__(
             # Convolution Parts
-            p1=CBRPart(in_channel, c2),
-            p2=CBRPart(c2, c3),
-            p3=CBRPart(c3, c4),
-            p4=CBRPart(c4, c5),
-            p5=CBRPart(c5, c4),
-            p6=CBRPart(c4, c3),
-            p7=CBRPart(c3, c2),
-            p8=CBRPart(c2, c1),
+            conv1=CBRPart(in_channel, c1),
+            conv2=CBRPart(c1, c2),
+            conv3=CBRPart(c2, c3),
+            conv4=CBRPart(c3, c4),
+            conv5=CBRPart(c4, c5),
+
+            dconv4=CBRPart(c5, c4),
+            dconv3=CBRPart(c4, c3),
+            dconv2=CBRPart(c3, c2),
+            dconv1=CBRPart(c2, c1),
             conv_classifier=L.Convolution2D(c1, out_channel, 1, 1, 0)
             )
 
     def __call__(self, x):
 
         outsize1 = x.shape[-2:]
-        h = self.p1(x)
+        h = self.conv1(x)
         h = F.max_pooling_2d(h, 2)
 
         outsize2 = h.shape[-2:]
-        h = self.p2(h)
+        h = self.conv2(h)
         h = F.max_pooling_2d(h, 2)
 
         outsize3 = h.shape[-2:]
-        h = self.p3(h)
+        h = self.conv3(h)
         h = F.max_pooling_2d(h, 2)
 
         outsize4 = h.shape[-2:]
-        h = self.p4(h)
+        h = self.conv4(h)
         h = F.max_pooling_2d(h, 2)
 
+        outsize5 = h.shape[-2:]
+        h = self.conv5(h)
+        h = F.max_pooling_2d(h, 2)
+
+        h = F.unpooling_2d(h, 2, outsize=outsize5)
+        h = self.dconv4(h)
+
         h = F.unpooling_2d(h, 2, outsize=outsize4)
-        h = self.p5(h)
+        h = self.dconv3(h)
 
         h = F.unpooling_2d(h, 2, outsize=outsize3)
-        h = self.p6(h)
+        h = self.dconv2(h)
 
         h = F.unpooling_2d(h, 2, outsize=outsize2)
-        h = self.p7(h)
+        h = F.dropout(self.dconv1(h))
 
         h = F.unpooling_2d(h, 2, outsize=outsize1)
-        # h = F.dropout(self.p8(h))
-        h = self.p8(h)
+        # h = self.h
         y = self.conv_classifier(h)
         return y
 

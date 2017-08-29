@@ -141,6 +141,7 @@ def print_result_log(epoch, train_loss_log, test_loss_log,
     # エポック数、認識率、損失値の表示
     print('{}: loss = {}, accuracy = {}'.format(epoch, epoch_loss, epoch_acc))
     # グラフの表示
+    # lossの推移
     plt.figure(figsize=(9, 3))
     plt.subplot(1, 2, 1)
     plt.title('Loss')
@@ -149,13 +150,13 @@ def print_result_log(epoch, train_loss_log, test_loss_log,
     plt.legend()
     plt.grid()
 
+    # accuracyの推移
     plt.subplot(1, 2, 2)
     plt.title('Accuracy')
     plt.plot(train_acc_log, label='train acc')
     plt.plot(test_acc_log, label='test acc')
     plt.legend()
     plt.grid()
-
     plt.tight_layout()
     plt.show()
 
