@@ -17,7 +17,7 @@ import chainer.functions as F
 from chainer import cuda
 from chainer import optimizers
 from chainer import serializers
-from segnet_network import SegNetBasic
+from segnet_networks import SegNetBasic, SegNetBasicOnly, SegNetBasicAll
 
 from loader import CamVid_loader
 
@@ -39,25 +39,30 @@ def training_parameters():
     num_epochs = int(cp.get('Hyper_parameters', 'number_epochs'))
     batch_size = int(cp.get('Hyper_parameters', 'batch_size'))
     learning_rate = float(cp.get('Hyper_parameters', 'learning_rate'))
+    dropout_mode = cp.get('Hyper_parameters', 'dropout_mode')
 
-    return use_device, num_epochs, batch_size, learning_rate
+    return use_device, num_epochs, batch_size, learning_rate, dropout_mode
 
 
-def train_part(model, num_train, x_train, c_train, batch_size):
+def train_part(model, optimizer, num_train, x_train, c_train, batch_size):
 
     epoch_losses = []               # エポック内の損失値
     epoch_accs = []                 # エポック内の認識率
+    model.cleargrads()
     for i in tqdm(range(0, num_train, batch_size)):
         x_batch = xp.asarray(x_train[i:i+batch_size], dtype=xp.float32)
         ｃ_batch = xp.asarray(c_train[i:i+batch_size], dtype=xp.int32)
-        y_batch = model(x_batch)
+        with chainer.using_config('train', True):
+            y_batch = model(x_batch)
 
-        # 損失関数の計算
-        loss = F.softmax_cross_entropy(y_batch, c_batch)
-        model.cleargrads()              # 勾配のリセット
-        loss.backward()                 # 重みの更新
-        accuracy = F.accuracy(y_batch, c_batch)       # 認識率
+            # 損失関数の計算
+            loss = F.softmax_cross_entropy(y_batch, c_batch)
+            accuracy = F.accuracy(y_batch, c_batch)       # 認識率
+
+            loss.backward()                 # 重みの更新
+
         optimizer.update()
+        model.cleargrads()              # 勾配のリセット
 
         epoch_losses.append(loss.data)
         epoch_accs.append(accuracy.data)
@@ -80,11 +85,12 @@ def validation(model, num_test, x_test, c_test, batch_size):      # バリデー
         x_batch = chainer.Variable(x_batch)
         ｃ_batch = chainer.Variable(c_batch)
         with chainer.no_backprop_mode():
-            y_batch = model(x_batch)
+            with chainer.using_config('train', False):
+                y_batch = model(x_batch)
 
-        # 損失関数の計算
-        loss = F.softmax_cross_entropy(y_batch, c_batch)
-        accuracy = F.accuracy(y_batch, c_batch)       # 認識率
+                # 損失関数の計算
+                loss = F.softmax_cross_entropy(y_batch, c_batch)
+                accuracy = F.accuracy(y_batch, c_batch)       # 認識率
 
         losses.append(loss.data)
         accs.append(accuracy.data)
@@ -115,19 +121,23 @@ def check_result(x_test, best_model):
         plt.show()
 
 
-def save_best_model(test_loss, model, best_model, best_val_loss, best_epoch):
+def save_best_model(test_loss, test_acc,
+                    model, best_model, best_test_acc,
+                    best_val_loss, best_epoch):
     # 最小損失ならそのモデルを保持
     if test_loss < best_val_loss:
         best_model = deepcopy(model)
         best_val_loss = test_loss
+        best_test_acc = test_acc
         best_epoch = epoch
 
     else:
         best_model = best_model
         best_val_loss = best_val_loss
+        best_test_acc = best_test_acc
         best_epoch = best_epoch
 
-    return best_model, best_val_loss, best_epoch
+    return best_model, best_val_loss, best_test_acc, best_epoch
 
 
 def print_result_log(epoch, train_loss_log, test_loss_log,
@@ -136,6 +146,7 @@ def print_result_log(epoch, train_loss_log, test_loss_log,
     # エポック数、認識率、損失値の表示
     print('{}: loss = {}, accuracy = {}'.format(epoch, epoch_loss, epoch_acc))
     # グラフの表示
+    # lossの推移
     plt.figure(figsize=(9, 3))
     plt.subplot(1, 2, 1)
     plt.title('Loss')
@@ -144,15 +155,32 @@ def print_result_log(epoch, train_loss_log, test_loss_log,
     plt.legend()
     plt.grid()
 
+    # accuracyの推移
     plt.subplot(1, 2, 2)
     plt.title('Accuracy')
     plt.plot(train_acc_log, label='train acc')
     plt.plot(test_acc_log, label='test acc')
     plt.legend()
     plt.grid()
-
     plt.tight_layout()
     plt.show()
+
+
+def complete_logs(best_epoch, best_val_loss, best_test_acc, num_epochs,
+                  batch_size, learning_rate, dropout_mode):
+    print('[Hyper Parameters]')
+    print('Best Epoch = {}'. format(best_epoch))
+    print('min loss = {}'. format(best_val_loss))
+    print('max accuracy = {}'. format(best_test_acc))
+    print('Epochs = {}'. format(num_epochs))
+    print('batch size = {}'. format(batch_size))
+    print('learning rate = {}'. format(learning_rate))
+    if dropout_mode == 'none':
+        print('Dropout layner is not used.')
+    elif dropout_mode == 'only':
+        print('Dropout layer is used at just before last layer.')
+    elif dropout_mode == 'all':
+        print('Dropout layer is used in all layers.')
 
 
 if __name__ == '__main__':
@@ -160,10 +188,17 @@ if __name__ == '__main__':
     (x_train, x_test, c_train, c_test,
      num_train, num_test) = load_CamVid()
 
-    gpu, num_epochs, batch_size, learning_rate = training_parameters()
+    (gpu, num_epochs, batch_size,
+     learning_rate, dropout_mode) = training_parameters()
 
     xp = cuda.cupy if gpu >= 0 else np
-    model = SegNetBasic()
+    if dropout_mode == 'none':
+        model = SegNetBasic()
+    elif dropout_mode == 'only':
+        model = SegNetBasicOnly()
+    elif dropout_mode == 'all':
+        model = SegNetBasicAll()
+
     optimizer = optimizers.Adam(learning_rate)
     optimizer.setup(model)
 
@@ -178,12 +213,14 @@ if __name__ == '__main__':
     best_model = []
     best_epoch = []
     best_val_loss = np.inf  # 損失関数最小値保持値
+    best_test_acc = np.zeros
     epoch_loss = []
     epoch_acc = []
+
     try:
         for epoch in range(num_epochs):
             (train_loss_log, train_acc_log,
-             epoch_loss, epoch_acc) = train_part(model, num_train,
+             epoch_loss, epoch_acc) = train_part(model, optimizer, num_train,
                                                  x_train, c_train,
                                                  batch_size)
 
@@ -193,8 +230,11 @@ if __name__ == '__main__':
                                                batch_size)
 
             (best_model, best_val_loss,
-             best_epoch) = save_best_model(test_loss, model, best_model,
-                                           best_val_loss, best_epoch)
+             best_test_acc, best_epoch) = save_best_model(test_loss, test_acc,
+                                                          model, best_model,
+                                                          best_test_acc,
+                                                          best_val_loss,
+                                                          best_epoch)
 
             print_result_log(epoch, train_loss_log, test_loss_log,
                              train_acc_log, test_acc_log,
@@ -209,8 +249,5 @@ if __name__ == '__main__':
 
     check_result(x_test, best_model)
 
-    print('Hyper Parameters')
-    print('min loss = {}'. format(best_val_loss))
-    print('Epochs = {}'. format(num_epochs))
-    print('batch size = {}'. format(batch_size))
-    print('learning rate = {}'. format(learning_rate))
+    complete_logs(best_epoch, best_val_loss, best_test_acc,
+                  num_epochs, batch_size, learning_rate, dropout_mode)
